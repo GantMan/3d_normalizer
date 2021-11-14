@@ -46,3 +46,7 @@ body {
 .grouping {
   width: 100%;
 }
+
+.grouping h2 {
+  text-align: center;
+}

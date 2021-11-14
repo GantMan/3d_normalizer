@@ -28,16 +28,49 @@
         [-1, -1, 0],
       ]
       function spinEm() {
-        window.inputGL.resize()
-        window.inputGL && window.inputGL.startOrbitAnimation()
+        // window.inputContainer.resize()
+        window.inputContainer && window.inputContainer.startOrbitAnimation()
+        window.goalContainer && window.goalContainer.startOrbitAnimation()
+        window.transformedContainer &&
+          window.transformedContainer.startOrbitAnimation()
       }
       function selectColor(colorNum, colors) {
         if (colors < 1) colors = 1 // defaults to one color - avoid divide by zero
         if (colorNum >= colors) return 'white'
         return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
       }
-      async function runCode() {
-        const points = [
+
+      function create3DPolygon(points = 3) {
+        // Create *points* number of points 3D space (X, Y, Z)
+        const polyPoints = Array.from({ length: points }, () => [
+          Math.random(),
+          Math.random(),
+          Math.random(),
+        ])
+
+        const metadata = []
+        const sequences = []
+        for (let i = 0; i < points; i++) {
+          // Add point labels
+          metadata.push({
+            labelIndex: i,
+            label: `X: ${Number(polyPoints[i][0]).toFixed(1)} Y: ${Number(
+              polyPoints[i][1]
+            ).toFixed(1)} Z: ${Number(polyPoints[i][2]).toFixed(1)}`,
+          })
+
+          // Draw a line
+          sequences.push({ indices: [i, (i + 1) % points] })
+        }
+        return {
+          metadata,
+          sequences,
+          polyPoints,
+        }
+      }
+
+      function simpleTriangle() {
+        const polyPoints = [
           [0, 0, 0],
           [0.5, 0.5, 0.5],
           [1, 0, 1],
@@ -51,39 +84,62 @@
             labelIndex: 1,
             label: points[1],
           },
+          {
+            labelIndex: 2,
+            label: points[2],
+          },
         ]
         const sequences = [
           {
             indices: [0, 1],
           },
           {
-            indices: [0, 2],
-          },
-          {
             indices: [1, 2],
           },
+          {
+            indices: [2, 0],
+          },
         ]
+        return {
+          metadata,
+          sequences,
+          polyPoints,
+        }
+      }
 
-        const containerElement = document.getElementById('inputContainer')
+      function drawPolygon(destination, polygon) {
+        // Create scatter graph
+        const containerElement = document.getElementById(destination)
+        const scatterGL = new ScatterGL(containerElement)
+
+        // Get polydata
+        const { polyPoints, metadata, sequences } = polygon
         const dataset = new ScatterGL.Dataset(
-          [...points, ...ANCHOR_POINTS],
+          [...polyPoints, ...ANCHOR_POINTS],
           metadata
         )
-        const scatterGL = new ScatterGL(containerElement)
-        window.inputGL = scatterGL // for outside access
 
+        // Add data to scatter graph + lines
         scatterGL.render(dataset)
         scatterGL.setSequences(sequences)
-        scatterGL.setPointColorer((index) => selectColor(index, points.length))
-        scatterGL.scatterPlot.setPolylineOpacities([1, 1, 1])
+        scatterGL.setPointColorer((index) =>
+          selectColor(index, polyPoints.length)
+        )
+        scatterGL.scatterPlot.setPolylineOpacities(
+          new Array(polyPoints.length).fill(1)
+        )
 
-        // THIS WILL BREAK if you update versions
-        scatterGL.scatterPlot.setPolylineColors({
-          // two sets of RGB (gradients)
-          0: new Float32Array([1, 0, 0, 0, 1, 0]), // Red into Green
-          1: new Float32Array([1, 0, 0, 0, 0, 1]), // Red into blue (second sequence)
-          2: new Float32Array([0, 1, 0, 0, 0, 1]), // Green into blue (third sequence)
-        })
+        // store on Global for accessibility
+        window[destination] = scatterGL
+      }
+
+      async function runCode() {
+        const inputPolygon = create3DPolygon(3)
+        drawPolygon('inputContainer', inputPolygon)
+        const goalPolygon = create3DPolygon(4)
+        drawPolygon('goalContainer', goalPolygon)
+        const transformedPolygon = create3DPolygon(5)
+        drawPolygon('transformedContainer', transformedPolygon)
       }
     </script>
   </head>
@@ -97,11 +153,11 @@
         </div>
         <div class="grouping">
           <h2>Goal</h2>
-          <div id="goalContainer"></div>
+          <div id="goalContainer" class="chart"></div>
         </div>
         <div class="grouping">
           <h2>Transformed</h2>
-          <div id="transformedContainer"></div>
+          <div id="transformedContainer" class="chart"></div>
         </div>
       </div>
     </div>

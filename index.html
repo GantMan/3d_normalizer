@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Require the peer dependencies of pose-detection. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+
+    <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+
+    <!-- Load three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+    <!-- Load scatter-gl.js -->
+    <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script>
+
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/three@0.125/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.11/lib/scatter-gl.min.js"></script>
+    -->
+
+    <script>
+      // These points will be added to scale the plot, but will be painted white to hide
+      const ANCHOR_POINTS = [
+        [0, 0, 0],
+        [0, 1, 0],
+        [-1, 0, 0],
+        [-1, -1, 0],
+      ]
+      function spinEm() {
+        window.inputGL.resize()
+        window.inputGL && window.inputGL.startOrbitAnimation()
+      }
+      function selectColor(colorNum, colors) {
+        if (colors < 1) colors = 1 // defaults to one color - avoid divide by zero
+        if (colorNum >= colors) return 'white'
+        return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
+      }
+      async function runCode() {
+        const points = [
+          [0, 0, 0],
+          [0.5, 0.5, 0.5],
+          [1, 0, 1],
+        ]
+        const metadata = [
+          {
+            labelIndex: 0,
+            label: points[0],
+          },
+          {
+            labelIndex: 1,
+            label: points[1],
+          },
+        ]
+        const sequences = [
+          {
+            indices: [0, 1],
+          },
+          {
+            indices: [0, 2],
+          },
+          {
+            indices: [1, 2],
+          },
+        ]
+
+        const containerElement = document.getElementById('inputContainer')
+        const dataset = new ScatterGL.Dataset(
+          [...points, ...ANCHOR_POINTS],
+          metadata
+        )
+        const scatterGL = new ScatterGL(containerElement)
+        window.inputGL = scatterGL // for outside access
+
+        scatterGL.render(dataset)
+        scatterGL.setSequences(sequences)
+        scatterGL.setPointColorer((index) => selectColor(index, points.length))
+        scatterGL.scatterPlot.setPolylineOpacities([1, 1, 1])
+
+        // THIS WILL BREAK if you update versions
+        scatterGL.scatterPlot.setPolylineColors({
+          // two sets of RGB (gradients)
+          0: new Float32Array([1, 0, 0, 0, 1, 0]), // Red into Green
+          1: new Float32Array([1, 0, 0, 0, 0, 1]), // Red into blue (second sequence)
+          2: new Float32Array([0, 1, 0, 0, 0, 1]), // Green into blue (third sequence)
+        })
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Normalization</h1>
+    <div id="squeezer">
+      <div class="poseGroup">
+        <div class="grouping">
+          <h2>Input</h2>
+          <div id="inputContainer" class="chart"></div>
+        </div>
+        <div class="grouping">
+          <h2>Goal</h2>
+          <div id="goalContainer"></div>
+        </div>
+        <div class="grouping">
+          <h2>Transformed</h2>
+          <div id="transformedContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button onclick="runCode()">Process stuff</button>
+      <button onclick="spinEm()">Spin Em</button>
+    </div>
+  </body>
+</html>

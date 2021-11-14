@@ -1,0 +1,48 @@
+body {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.poseGroup {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.poseGroup > textarea {
+  font-size: x-small;
+  flex: 1;
+  padding: 20px;
+}
+
+#sizer {
+  width: 25%;
+  text-align: center;
+  margin: auto;
+}
+
+/* #poseImage2 {
+  transform: scaleX(-1);
+} */
+
+#controls {
+  flex-direction: column;
+  border-top: 1px solid black;
+  padding: 10px;
+}
+
+#squeezer {
+  width: 90%;
+  margin: auto;
+}
+
+.chart {
+  height: 500px;
+  background-color: aliceblue;
+}
+
+.grouping {
+  width: 100%;
+}

@@ -2,6 +2,7 @@
 <html>
   <head>
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
     <!-- Require the peer dependencies of pose-detection. -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
@@ -10,14 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
     <!-- Load three.js -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script> -->
     <!-- Load scatter-gl.js -->
-    <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
 
-    <!--
     <script src="https://cdn.jsdelivr.net/npm/three@0.125/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.11/lib/scatter-gl.min.js"></script>
-    -->
 
     <script>
       // These points will be added to scale the plot, but will be painted white to hide
@@ -40,17 +39,10 @@
         return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
       }
 
-      function create3DPolygon(points = 3) {
-        // Create *points* number of points 3D space (X, Y, Z)
-        const polyPoints = Array.from({ length: points }, () => [
-          Math.random(),
-          Math.random(),
-          Math.random(),
-        ])
-
+      function generateMeta(polyPoints) {
         const metadata = []
         const sequences = []
-        for (let i = 0; i < points; i++) {
+        for (let i = 0; i < polyPoints.length; i++) {
           // Add point labels
           metadata.push({
             labelIndex: i,
@@ -60,46 +52,20 @@
           })
 
           // Draw a line
-          sequences.push({ indices: [i, (i + 1) % points] })
+          sequences.push({ indices: [i, (i + 1) % polyPoints.length] })
         }
-        return {
-          metadata,
-          sequences,
-          polyPoints,
-        }
+        return { metadata, sequences }
       }
 
-      function simpleTriangle() {
-        const polyPoints = [
-          [0, 0, 0],
-          [0.5, 0.5, 0.5],
-          [1, 0, 1],
-        ]
-        const metadata = [
-          {
-            labelIndex: 0,
-            label: points[0],
-          },
-          {
-            labelIndex: 1,
-            label: points[1],
-          },
-          {
-            labelIndex: 2,
-            label: points[2],
-          },
-        ]
-        const sequences = [
-          {
-            indices: [0, 1],
-          },
-          {
-            indices: [1, 2],
-          },
-          {
-            indices: [2, 0],
-          },
-        ]
+      function create3DPolygon(points = 3) {
+        // Create *points* number of points 3D space (X, Y, Z)
+        const polyPoints = Array.from({ length: points }, () => [
+          Math.random(),
+          Math.random(),
+          Math.random(),
+        ])
+
+        const { metadata, sequences } = generateMeta(polyPoints)
         return {
           metadata,
           sequences,
@@ -110,7 +76,10 @@
       function drawPolygon(destination, polygon) {
         // Create scatter graph
         const containerElement = document.getElementById(destination)
-        const scatterGL = new ScatterGL(containerElement)
+        // if it exists grab the existing one
+        const scatterGL = window[destination].sequences
+          ? window[destination]
+          : new ScatterGL(containerElement)
 
         // Get polydata
         const { polyPoints, metadata, sequences } = polygon
@@ -120,8 +89,12 @@
         )
 
         // Add data to scatter graph + lines
-        scatterGL.render(dataset)
-        scatterGL.setSequences(sequences)
+        if (window[destination].sequences) {
+          scatterGL.updateDataset(dataset, sequences)
+        } else {
+          scatterGL.render(dataset)
+          scatterGL.setSequences(sequences)
+        }
         scatterGL.setPointColorer((index) =>
           selectColor(index, polyPoints.length)
         )
@@ -129,22 +102,72 @@
           new Array(polyPoints.length).fill(1)
         )
 
-        // store on Global for accessibility
+        // store on Global for debug accessibility
         window[destination] = scatterGL
+      }
+
+      function createR() {
+        const R = create3DPolygon(3)
+        drawPolygon('rotateContainer', R)
       }
 
       async function runCode() {
         const inputPolygon = create3DPolygon(3)
         drawPolygon('inputContainer', inputPolygon)
-        const goalPolygon = create3DPolygon(4)
+        const goalPolygon = create3DPolygon(3)
         drawPolygon('goalContainer', goalPolygon)
-        const transformedPolygon = create3DPolygon(5)
+
+        // Step 1:  Re-origin on focal point
+        const fixPointIndex = 0
+        const focalPoint = goalPolygon.polyPoints[fixPointIndex]
+        const transformVector = focalPoint.map(
+          (v, i) => v - inputPolygon.polyPoints[fixPointIndex][i]
+        )
+        const polyPoints = inputPolygon.polyPoints.map((point) => {
+          return point.map((coord, i) => coord + transformVector[i])
+        })
+
+        // Step 2: 2D Rotate around focal point to align with alignPoint
+        const alignPointIndex = 1
+        const alignPoint = goalPolygon.polyPoints[alignPointIndex]
+        const rotationPoint = polyPoints[alignPointIndex]
+        // Calculate vector angle using (u*v)/|u||v|
+        const dotprod = tf.dot(focalPoint, alignPoint)
+        const magnitude1 = tf.norm(alignPoint)
+        const magnitude2 = tf.norm(focalPoint)
+        const theta = tf.acos(dotprod.div(magnitude1.mul(magnitude2)))
+        // Create rotation matrix with theta
+        const tc = theta.cos().arraySync()
+        const ts = theta.sin().arraySync()
+        // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+        const rx = tf.tensor([
+          [1, 0, 0],
+          [0, tc, -ts],
+          [0, ts, tc],
+        ])
+        const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
+        const newAlignPoint = tf.matMul(rx, tensorAlign)
+        const movedPoint = newAlignPoint.arraySync()
+        polyPoints[alignPointIndex] = movedPoint
+
+        // Step 3: Draw transformed polygon
+        const { metadata, sequences } = generateMeta(polyPoints)
+        const transformedPolygon = {
+          metadata,
+          sequences,
+          polyPoints,
+        }
         drawPolygon('transformedContainer', transformedPolygon)
+        console.log({
+          inputPolygon,
+          goalPolygon,
+          transformedPolygon,
+        })
       }
     </script>
   </head>
   <body>
-    <h1>Normalization</h1>
+    <h1>3D Polygon Normalization</h1>
     <div id="squeezer">
       <div class="poseGroup">
         <div class="grouping">
@@ -165,6 +188,17 @@
     <div id="controls">
       <button onclick="runCode()">Process stuff</button>
       <button onclick="spinEm()">Spin Em</button>
+    </div>
+
+    <hr />
+    <h2>Concept Training</h2>
+    <div>
+      <div class="grouping">
+        <div id="rotateContainer" class="chart"></div>
+      </div>
+      <button onclick="createR()">Create</button>
+      <button onclick="rotateLeft()">Rotate Left</button>
+      <button onclick="rotateRight()">Rotate Right</button>
     </div>
   </body>
 </html>

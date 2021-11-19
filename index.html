@@ -28,15 +28,66 @@
       ]
       function spinEm() {
         // window.inputContainer.resize()
-        window.inputContainer && window.inputContainer.startOrbitAnimation()
-        window.goalContainer && window.goalContainer.startOrbitAnimation()
-        window.transformedContainer &&
+        window.inputContainer.startOrbitAnimation &&
+          window.inputContainer.startOrbitAnimation()
+        window.goalContainer.startOrbitAnimation &&
+          window.goalContainer.startOrbitAnimation()
+        window.transformedContainer.startOrbitAnimation &&
           window.transformedContainer.startOrbitAnimation()
+        window.rotateContainer.startOrbitAnimation &&
+          window.rotateContainer.startOrbitAnimation()
       }
-      function selectColor(colorNum, colors) {
-        if (colors < 1) colors = 1 // defaults to one color - avoid divide by zero
-        if (colorNum >= colors) return 'white'
+      function selectColor(colorNum, totalPoints, colors) {
+        if (colors < 1) colors = 1 // avoid divide by zero
+        if (colorNum >= totalPoints) return 'white'
+        if (colorNum >= colors) return 'black'
         return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
+      }
+
+      function simpleTriangle(delta = [1, 1, 1]) {
+        const polyPoints = [
+          [-0.5, -0.5, -0.5],
+          [0.5, 0.5, 0.5],
+          [1, 0, 1],
+        ]
+        polyPoints.forEach((point, i) => {
+          polyPoints[i][0] *= delta[0]
+          polyPoints[i][1] *= delta[1]
+          polyPoints[i][2] *= delta[2]
+        })
+
+        const metadata = [
+          {
+            labelIndex: 0,
+            label: polyPoints[0],
+          },
+          {
+            labelIndex: 1,
+            label: polyPoints[1],
+          },
+          {
+            labelIndex: 2,
+            label: polyPoints[2],
+          },
+        ]
+        const sequences = [
+          {
+            indices: [0, 1],
+          },
+          {
+            indices: [0, 2],
+            indices: [1, 2],
+          },
+          {
+            indices: [1, 2],
+            indices: [2, 0],
+          },
+        ]
+        return {
+          metadata,
+          sequences,
+          polyPoints,
+        }
       }
 
       function generateMeta(polyPoints) {
@@ -73,7 +124,7 @@
         }
       }
 
-      function drawPolygon(destination, polygon) {
+      function drawMulti(destination, polies) {
         // Create scatter graph
         const containerElement = document.getElementById(destination)
         // if it exists grab the existing one
@@ -81,92 +132,114 @@
           ? window[destination]
           : new ScatterGL(containerElement)
 
-        // Get polydata
-        const { polyPoints, metadata, sequences } = polygon
-        const dataset = new ScatterGL.Dataset(
-          [...polyPoints, ...ANCHOR_POINTS],
-          metadata
-        )
+        let pointSize = 0
+        let totalSequence = []
+        let dataset = []
+        polies.forEach((polygon) => {
+          const { polyPoints, metadata, sequences } = polygon
+          dataset = [...dataset, ...polyPoints]
+          const bumpedSequences = sequences.map((sequence) => {
+            const bumped = sequence.indices.map((index) => index + pointSize)
+            return { indices: bumped }
+          })
+          pointSize += polyPoints.length
+          totalSequence = [...totalSequence, ...bumpedSequences]
+        })
+
+        glDataset = new ScatterGL.Dataset([...dataset, ...ANCHOR_POINTS])
 
         // Add data to scatter graph + lines
         if (window[destination].sequences) {
-          scatterGL.updateDataset(dataset, sequences)
+          scatterGL.updateDataset(glDataset, totalSequence)
         } else {
-          scatterGL.render(dataset)
-          scatterGL.setSequences(sequences)
+          scatterGL.render(glDataset)
+          scatterGL.setSequences(totalSequence)
         }
         scatterGL.setPointColorer((index) =>
-          selectColor(index, polyPoints.length)
+          selectColor(index, pointSize, polies[0].polyPoints.length)
         )
-        scatterGL.scatterPlot.setPolylineOpacities(
-          new Array(polyPoints.length).fill(1)
-        )
+        scatterGL.scatterPlot.setPolylineOpacities(new Array(pointSize).fill(1))
 
         // store on Global for debug accessibility
         window[destination] = scatterGL
+        console.log({ destination, pointSize, totalSequence, dataset })
       }
 
       function createR() {
-        const R = create3DPolygon(3)
-        drawPolygon('rotateContainer', R)
+        const random = simpleTriangle([1, 1, 0.2])
+        const triangle = simpleTriangle()
+        drawMulti('rotateContainer', [random, triangle])
         // store R in global for debug accessibility
-        window.R = R 
+        window.R = [random, triangle]
       }
 
-      function originR() {
-        const R = window.R 
-        const focalPoint = R.polyPoints[0]
-        R.polyPoints.map((point, idx) => {
-          R.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
+      function originPoly(polyIndex = 0) {
+        const R = window.R
+        const polygon = R[polyIndex]
+        const focalPoint = polygon.polyPoints[0]
+        polygon.polyPoints.map((point, idx) => {
+          polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
         })
-        drawPolygon('rotateContainer', R)
+        R[polyIndex] = polygon
+        drawMulti('rotateContainer', R)
         window.R = R
       }
 
+      function alignPoly(polyIndex = 0) {
+        const R = window.R
+        const polygon = R[polyIndex]
+        const alignPoint = polygon.polyPoints[1]
+
+        const xang = Math.atan2(alignPoint[1], alignPoint[0])
+        // TODO: Get other angles and rotate accordingly
+      }
+
       function rotate(axis) {
-        const R = window.R 
-        const theta = tf.scalar(.1)
+        const R = window.R
+        const polygon = R[0]
+        const theta = tf.scalar(0.1)
         const tc = theta.cos().arraySync()
         const ts = theta.sin().arraySync()
         // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
         let rotateMatrix
-        if (axis === "x") {
+        if (axis === 'x') {
           rotateMatrix = tf.tensor([
             [1, 0, 0],
             [0, tc, -ts],
             [0, ts, tc],
           ])
-        } else if (axis === "y") {
+        } else if (axis === 'y') {
           rotateMatrix = tf.tensor([
             [tc, 0, ts],
             [0, 1, 0],
             [-ts, 0, tc],
           ])
-        } else if (axis === "z") {
+        } else if (axis === 'z') {
           rotateMatrix = tf.tensor([
             [tc, -ts, 0],
             [ts, tc, 0],
             [0, 0, 1],
           ])
         }
-        
-        R.polyPoints.map((alignPoint, alignPointIndex) => {
+
+        polygon.polyPoints.map((alignPoint, alignPointIndex) => {
           const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
           const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign)
           const movedPoint = newAlignPoint.arraySync()
-          R.polyPoints[alignPointIndex] = movedPoint        
+          polygon.polyPoints[alignPointIndex] = movedPoint
         })
 
-        drawPolygon('rotateContainer', R)
+        R[0] = polygon
+        drawMulti('rotateContainer', R)
 
         window.R = R
       }
 
       async function runCode() {
         const inputPolygon = create3DPolygon(3)
-        drawPolygon('inputContainer', inputPolygon)
+        drawMulti('inputContainer', [inputPolygon])
         const goalPolygon = create3DPolygon(3)
-        drawPolygon('goalContainer', goalPolygon)
+        drawMulti('goalContainer', [goalPolygon])
 
         // Step 1:  Re-origin on focal point
         const fixPointIndex = 0
@@ -208,17 +281,28 @@
           sequences,
           polyPoints,
         }
-        drawPolygon('transformedContainer', transformedPolygon)
-        console.log({
-          inputPolygon,
-          goalPolygon,
-          transformedPolygon,
-        })
+        drawMulti('transformedContainer', [transformedPolygon])
       }
     </script>
   </head>
   <body>
     <h1>3D Polygon Normalization</h1>
+
+    <h2>Concept Training</h2>
+    <div>
+      <div class="grouping">
+        <div id="rotateContainer" class="chart"></div>
+      </div>
+      <button onclick="createR()">Create</button>
+      <button onclick="originPoly(1)">Move Goal to Origin</button>
+      <button onclick="originPoly(0)">Move Input to Origin</button>
+      <button onclick="alignPoly(0)">Align Goal Secondary</button>
+      <button onclick="alignPoly(0)">Align Input Secondary</button>
+      <button onclick="rotate('x')">Rotate X</button>
+      <button onclick="rotate('y')">Rotate Y</button>
+      <button onclick="rotate('z')">Rotate Z</button>
+    </div>
+    <hr />
     <div id="squeezer">
       <div class="poseGroup">
         <div class="grouping">
@@ -239,19 +323,6 @@
     <div id="controls">
       <button onclick="runCode()">Process stuff</button>
       <button onclick="spinEm()">Spin Em</button>
-    </div>
-
-    <hr />
-    <h2>Concept Training</h2>
-    <div>
-      <div class="grouping">
-        <div id="rotateContainer" class="chart"></div>
-      </div>
-      <button onclick="createR()">Create</button>
-      <button onclick="originR()">Move to Origin</button>
-      <button onclick="rotate('x')">Rotate X</button>
-      <button onclick="rotate('y')">Rotate Y</button>
-      <button onclick="rotate('z')">Rotate Z</button>
     </div>
   </body>
 </html>

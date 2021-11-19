@@ -109,6 +109,57 @@
       function createR() {
         const R = create3DPolygon(3)
         drawPolygon('rotateContainer', R)
+        // store R in global for debug accessibility
+        window.R = R 
+      }
+
+      function originR() {
+        const R = window.R 
+        const focalPoint = R.polyPoints[0]
+        R.polyPoints.map((point, idx) => {
+          R.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
+        })
+        drawPolygon('rotateContainer', R)
+        window.R = R
+      }
+
+      function rotate(axis) {
+        const R = window.R 
+        const theta = tf.scalar(.1)
+        const tc = theta.cos().arraySync()
+        const ts = theta.sin().arraySync()
+        // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+        let rotateMatrix
+        if (axis === "x") {
+          rotateMatrix = tf.tensor([
+            [1, 0, 0],
+            [0, tc, -ts],
+            [0, ts, tc],
+          ])
+        } else if (axis === "y") {
+          rotateMatrix = tf.tensor([
+            [tc, 0, ts],
+            [0, 1, 0],
+            [-ts, 0, tc],
+          ])
+        } else if (axis === "z") {
+          rotateMatrix = tf.tensor([
+            [tc, -ts, 0],
+            [ts, tc, 0],
+            [0, 0, 1],
+          ])
+        }
+        
+        R.polyPoints.map((alignPoint, alignPointIndex) => {
+          const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
+          const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign)
+          const movedPoint = newAlignPoint.arraySync()
+          R.polyPoints[alignPointIndex] = movedPoint        
+        })
+
+        drawPolygon('rotateContainer', R)
+
+        window.R = R
       }
 
       async function runCode() {
@@ -197,8 +248,10 @@
         <div id="rotateContainer" class="chart"></div>
       </div>
       <button onclick="createR()">Create</button>
-      <button onclick="rotateLeft()">Rotate Left</button>
-      <button onclick="rotateRight()">Rotate Right</button>
+      <button onclick="originR()">Move to Origin</button>
+      <button onclick="rotate('x')">Rotate X</button>
+      <button onclick="rotate('y')">Rotate Y</button>
+      <button onclick="rotate('z')">Rotate Z</button>
     </div>
   </body>
 </html>

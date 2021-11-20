@@ -135,18 +135,25 @@
         let pointSize = 0
         let totalSequence = []
         let dataset = []
+        let pointsMeta = []
         polies.forEach((polygon) => {
-          const { polyPoints, metadata, sequences } = polygon
+          const { polyPoints, sequences } = polygon
+          const {metadata} = generateMeta(polyPoints) // Regenerate meta for changes
           dataset = [...dataset, ...polyPoints]
           const bumpedSequences = sequences.map((sequence) => {
             const bumped = sequence.indices.map((index) => index + pointSize)
             return { indices: bumped }
           })
+          const metaMiddle = metadata.map((meta, i) => ({
+            labelIndex: pointSize,
+            label: meta.label
+          }))
           pointSize += polyPoints.length
+          pointsMeta = [...pointsMeta, ...metaMiddle]
           totalSequence = [...totalSequence, ...bumpedSequences]
         })
 
-        glDataset = new ScatterGL.Dataset([...dataset, ...ANCHOR_POINTS])
+        glDataset = new ScatterGL.Dataset([...dataset, ...ANCHOR_POINTS], pointsMeta)
 
         // Add data to scatter graph + lines
         if (window[destination].sequences) {
@@ -191,13 +198,17 @@
         const alignPoint = polygon.polyPoints[1]
 
         const xang = Math.atan2(alignPoint[1], alignPoint[0])
+        const yang = Math.atan2(alignPoint[0], alignPoint[1])
+
         // TODO: Get other angles and rotate accordingly
+        rotate("x", polyIndex, xang)
+        rotate("y", polyIndex, yang)
       }
 
-      function rotate(axis) {
+      function rotate(axis, polyIndex = 0, rads = 0.1) {
         const R = window.R
-        const polygon = R[0]
-        const theta = tf.scalar(0.1)
+        const polygon = R[polyIndex]
+        const theta = tf.scalar(rads)
         const tc = theta.cos().arraySync()
         const ts = theta.sin().arraySync()
         // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -229,7 +240,7 @@
           polygon.polyPoints[alignPointIndex] = movedPoint
         })
 
-        R[0] = polygon
+        R[polyIndex] = polygon
         drawMulti('rotateContainer', R)
 
         window.R = R
@@ -297,7 +308,7 @@
       <button onclick="originPoly(1)">Move Goal to Origin</button>
       <button onclick="originPoly(0)">Move Input to Origin</button>
       <button onclick="alignPoly(0)">Align Goal Secondary</button>
-      <button onclick="alignPoly(0)">Align Input Secondary</button>
+      <button onclick="alignPoly(1)">Align Input Secondary</button>
       <button onclick="rotate('x')">Rotate X</button>
       <button onclick="rotate('y')">Rotate Y</button>
       <button onclick="rotate('z')">Rotate Z</button>

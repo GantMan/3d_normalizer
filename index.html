@@ -138,7 +138,7 @@
         let pointsMeta = []
         polies.forEach((polygon) => {
           const { polyPoints, sequences } = polygon
-          const {metadata} = generateMeta(polyPoints) // Regenerate meta for changes
+          const { metadata } = generateMeta(polyPoints) // Regenerate meta for changes
           dataset = [...dataset, ...polyPoints]
           const bumpedSequences = sequences.map((sequence) => {
             const bumped = sequence.indices.map((index) => index + pointSize)
@@ -146,14 +146,17 @@
           })
           const metaMiddle = metadata.map((meta, i) => ({
             labelIndex: pointSize,
-            label: meta.label
+            label: meta.label,
           }))
           pointSize += polyPoints.length
           pointsMeta = [...pointsMeta, ...metaMiddle]
           totalSequence = [...totalSequence, ...bumpedSequences]
         })
 
-        glDataset = new ScatterGL.Dataset([...dataset, ...ANCHOR_POINTS], pointsMeta)
+        glDataset = new ScatterGL.Dataset(
+          [...dataset, ...ANCHOR_POINTS],
+          pointsMeta
+        )
 
         // Add data to scatter graph + lines
         if (window[destination].sequences) {
@@ -198,11 +201,11 @@
         const alignPoint = polygon.polyPoints[1]
 
         const xang = Math.atan2(alignPoint[1], alignPoint[0])
-        const yang = Math.atan2(alignPoint[0], alignPoint[1])
+        const zang = Math.atan2(alignPoint[2], alignPoint[0])
 
         // TODO: Get other angles and rotate accordingly
-        rotate("x", polyIndex, xang)
-        rotate("y", polyIndex, yang)
+        rotate('z', polyIndex, xang)
+        rotate('y', polyIndex, zang)
       }
 
       function rotate(axis, polyIndex = 0, rads = 0.1) {
@@ -212,12 +215,13 @@
         const tc = theta.cos().arraySync()
         const ts = theta.sin().arraySync()
         // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
-        let rotateMatrix
+        // https://robotics.stackexchange.com/questions/10702/rotation-matrix-sign-convention-confusion
+        let rotateMatrix // CLOCKWISE
         if (axis === 'x') {
           rotateMatrix = tf.tensor([
             [1, 0, 0],
-            [0, tc, -ts],
-            [0, ts, tc],
+            [0, tc, ts],
+            [0, -ts, tc],
           ])
         } else if (axis === 'y') {
           rotateMatrix = tf.tensor([
@@ -227,11 +231,20 @@
           ])
         } else if (axis === 'z') {
           rotateMatrix = tf.tensor([
-            [tc, -ts, 0],
-            [ts, tc, 0],
+            [tc, ts, 0],
+            [-ts, tc, 0],
             [0, 0, 1],
           ])
         }
+
+        // Debugging math
+        const x = polygon.polyPoints[1][0]
+        const y = polygon.polyPoints[1][1]
+        const newX = tf.add(tf.mul(theta.cos(), x), tf.mul(theta.sin(), y))
+        const newY = tf.sub(tf.mul(theta.sin(), x), tf.mul(theta.cos(), y))
+        const solvedX = newX.arraySync()
+        const solvedY = newY.arraySync()
+        console.log({ solvedX, solvedY })
 
         polygon.polyPoints.map((alignPoint, alignPointIndex) => {
           const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
@@ -307,8 +320,8 @@
       <button onclick="createR()">Create</button>
       <button onclick="originPoly(1)">Move Goal to Origin</button>
       <button onclick="originPoly(0)">Move Input to Origin</button>
-      <button onclick="alignPoly(0)">Align Goal Secondary</button>
-      <button onclick="alignPoly(1)">Align Input Secondary</button>
+      <button onclick="alignPoly(1)">Align Goal Secondary</button>
+      <button onclick="alignPoly(0)">Align Input Secondary</button>
       <button onclick="rotate('x')">Rotate X</button>
       <button onclick="rotate('y')">Rotate Y</button>
       <button onclick="rotate('z')">Rotate Z</button>

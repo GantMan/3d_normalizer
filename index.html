@@ -208,6 +208,17 @@
         rotate('y', polyIndex, zang)
       }
 
+      function rotateToGoal() {
+        const R = window.R
+        const rotatePoint = R[0].polyPoints[2]
+        const goalRotatePoint = R[1].polyPoints[2]
+
+        const myang = Math.atan2(rotatePoint[2], rotatePoint[1])
+        const byang = Math.atan2(goalRotatePoint[2], goalRotatePoint[1])
+        const yang = byang - myang
+        rotate('x', 0, yang)
+      }
+
       function rotate(axis, polyIndex = 0, rads = 0.1) {
         const R = window.R
         const polygon = R[polyIndex]
@@ -220,8 +231,8 @@
         if (axis === 'x') {
           rotateMatrix = tf.tensor([
             [1, 0, 0],
-            [0, tc, ts],
-            [0, -ts, tc],
+            [0, tc, -ts],
+            [0, ts, tc],
           ])
         } else if (axis === 'y') {
           rotateMatrix = tf.tensor([
@@ -323,6 +334,7 @@
       <button onclick="originPoly(0)">Move Input to Origin</button>
       <button onclick="alignPoly(1)">Align Goal Secondary</button>
       <button onclick="alignPoly(0)">Align Input Secondary</button>
+      <button onclick="rotateToGoal()">Rotate Input to Goal</button>
       <button onclick="rotate('x')">Rotate X</button>
       <button onclick="rotate('y')">Rotate Y</button>
       <button onclick="rotate('z')">Rotate Z</button>

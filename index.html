@@ -216,7 +216,7 @@
         const ts = theta.sin().arraySync()
         // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
         // https://robotics.stackexchange.com/questions/10702/rotation-matrix-sign-convention-confusion
-        let rotateMatrix // CLOCKWISE
+        let rotateMatrix // Not the normal right-hand rule version
         if (axis === 'x') {
           rotateMatrix = tf.tensor([
             [1, 0, 0],

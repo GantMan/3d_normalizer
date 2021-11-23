@@ -329,12 +329,16 @@
       <div class="grouping">
         <div id="rotateContainer" class="chart"></div>
       </div>
-      <button onclick="createR()">Create</button>
-      <button onclick="originPoly(1)">Move Goal to Origin</button>
-      <button onclick="originPoly(0)">Move Input to Origin</button>
-      <button onclick="alignPoly(1)">Align Goal Secondary</button>
-      <button onclick="alignPoly(0)">Align Input Secondary</button>
-      <button onclick="rotateToGoal()">Rotate Input to Goal</button>
+      <div class="stepControls">
+        <button onclick="createR()">Create Triangles</button>
+        <button onclick="originPoly(1)">Move Goal to Origin</button>
+        <button onclick="originPoly(0)">Move Input to Origin</button>
+        <button onclick="alignPoly(1)">Align Goal Secondary</button>
+        <button onclick="alignPoly(0)">Align Input Secondary</button>
+        <button onclick="rotateToGoal()">Rotate Input to Goal</button>
+      </div>
+    </div>
+    <div class="funland">
       <button onclick="rotate('x')">Rotate X</button>
       <button onclick="rotate('y')">Rotate Y</button>
       <button onclick="rotate('z')">Rotate Z</button>

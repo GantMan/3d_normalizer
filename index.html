@@ -197,14 +197,14 @@
 
       function alignPoly(polyIndex = 0) {
         const R = window.R
-        const polygon = R[polyIndex]
-        const alignPoint = polygon.polyPoints[1]
+        let polygon = R[polyIndex]
+        let alignPoint = polygon.polyPoints[1]
 
         const xang = Math.atan2(alignPoint[1], alignPoint[0])
-        const zang = Math.atan2(alignPoint[2], alignPoint[0])
+        polygon = rotate('z', polyIndex, xang)
 
-        // TODO: Get other angles and rotate accordingly
-        rotate('z', polyIndex, xang)
+        alignPoint = polygon.polyPoints[1]
+        const zang = Math.atan2(alignPoint[2], alignPoint[0])
         rotate('y', polyIndex, zang)
       }
 
@@ -257,6 +257,7 @@
         drawMulti('rotateContainer', R)
 
         window.R = R
+        return polygon
       }
 
       async function runCode() {

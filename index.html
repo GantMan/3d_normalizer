@@ -330,12 +330,17 @@
         <div id="rotateContainer" class="chart"></div>
       </div>
       <div class="stepControls">
-        <button onclick="createR()">Create Triangles</button>
-        <button onclick="originPoly(1)">Move Goal to Origin</button>
-        <button onclick="originPoly(0)">Move Input to Origin</button>
-        <button onclick="alignPoly(1)">Align Goal Secondary</button>
-        <button onclick="alignPoly(0)">Align Input Secondary</button>
-        <button onclick="rotateToGoal()">Rotate Input to Goal</button>
+        <div class="creators">
+          <button onclick="createR()">Create Triangles</button>
+          <button onclick="createT()">Create Tetrahedrons</button>
+        </div>
+        <div>
+          <button onclick="originPoly(1)">Move Goal to Origin</button>
+          <button onclick="originPoly(0)">Move Input to Origin</button>
+          <button onclick="alignPoly(1)">Align Goal Secondary</button>
+          <button onclick="alignPoly(0)">Align Input Secondary</button>
+          <button onclick="rotateToGoal()">Rotate Input to Goal</button>
+        </div>
       </div>
     </div>
     <div class="funland">

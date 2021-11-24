@@ -52,8 +52,10 @@ body {
 }
 
 .stepControls {
+  display: flex;
   background-color: #e6e6e6;
   padding: 6px;
+  align-items: center;
 }
 
 .stepControls button {
@@ -69,4 +71,14 @@ body {
   height: 32px;
   margin: 10px;
   border-radius: 5px;
+}
+
+.creators {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.creators button {
+  padding: 0 10px;
+  margin: 2px 5px;
 }

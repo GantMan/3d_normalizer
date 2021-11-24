@@ -75,11 +75,9 @@
             indices: [0, 1],
           },
           {
-            indices: [0, 2],
             indices: [1, 2],
           },
           {
-            indices: [1, 2],
             indices: [2, 0],
           },
         ]
@@ -175,12 +173,39 @@
         console.log({ destination, pointSize, totalSequence, dataset })
       }
 
-      function createR() {
+      function createStandard() {
         const random = simpleTriangle([1, 1, 0.2])
         const triangle = simpleTriangle()
         drawMulti('rotateContainer', [random, triangle])
         // store R in global for debug accessibility
         window.R = [random, triangle]
+      }
+
+      function createR() {
+        const random = create3DPolygon(3)
+        const triangle = create3DPolygon(3)
+
+        drawMulti('rotateContainer', [random, triangle])
+        // store R in global for debug accessibility
+        window.R = [random, triangle]
+      }
+
+      function createT(pointCount = 6) {
+        let random = create3DPolygon(pointCount)
+        console.log({ random })
+        const lock = {
+          polyPoints: [...random.polyPoints],
+          metadata: [...random.metadata],
+          sequences: [...random.sequences],
+        }
+        window.R = [random, lock]
+        //drawMulti('rotateContainer', [random, lock])
+        rotate('x', 0, Math.random())
+        rotate('y', 0, Math.random())
+        const tetra = rotate('z', 0, Math.random())
+        // drawMulti('rotateContainer', [random, tetra])
+        // store R in global for debug accessibility
+        //window.R = [random, tetra]
       }
 
       function originPoly(polyIndex = 0) {
@@ -331,8 +356,10 @@
       </div>
       <div class="stepControls">
         <div class="creators">
-          <button onclick="createR()">Create Triangles</button>
-          <button onclick="createT()">Create Tetrahedrons</button>
+          <p>Create</p>
+          <button onclick="createStandard()">Similar Triangles</button>
+          <button onclick="createR()">Random Triangles</button>
+          <button onclick="createT(8)">Exact Poly Shapes</button>
         </div>
         <div>
           <button onclick="originPoly(1)">Move Goal to Origin</button>
@@ -344,6 +371,7 @@
       </div>
     </div>
     <div class="funland">
+      <p>Mod</p>
       <button onclick="rotate('x')">Rotate X</button>
       <button onclick="rotate('y')">Rotate Y</button>
       <button onclick="rotate('z')">Rotate Z</button>

@@ -68,14 +68,30 @@ body {
   display: flex;
   width: 12%;
   justify-content: space-around;
-  height: 32px;
+  height: 36px;
   margin: 10px;
   border-radius: 5px;
+}
+
+.funland p {
+  color: white;
+  margin: auto 5px;
 }
 
 .creators {
   display: inline-flex;
   flex-direction: column;
+  border: 1px dashed #333;
+  border-radius: 5px;
+  margin: 0 10px;
+}
+
+.creators p {
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  font-weight: bold;
+  font-style: italic;
 }
 
 .creators button {

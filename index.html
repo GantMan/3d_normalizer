@@ -212,9 +212,12 @@
         const R = window.R
         const polygon = R[polyIndex]
         const focalPoint = polygon.polyPoints[0]
+        // This is a non-vector translation to origin
         polygon.polyPoints.map((point, idx) => {
           polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
         })
+        // A vector translation to origin would be
+        // https://bit.ly/3DQbNbZ
         R[polyIndex] = polygon
         drawMulti('rotateContainer', R)
         window.R = R

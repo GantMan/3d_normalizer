@@ -19,6 +19,10 @@
     <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.11/lib/scatter-gl.min.js"></script>
 
     <script>
+      // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
+      // You could simply rotate and align the 3 points used and then create a custom transform matrix along the way.
+      // That derived matrix could batch-apply to all remaining points in one cross product transform.
+
       // These points will be added to scale the plot, but will be painted white to hide
       const ANCHOR_POINTS = [
         [0, 0, 0],

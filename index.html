@@ -10,26 +10,68 @@
     <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
-    <!-- Load three.js -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script> -->
-    <!-- Load scatter-gl.js -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
-
     <script src="https://cdn.jsdelivr.net/npm/three@0.125/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.11/lib/scatter-gl.min.js"></script>
+  </head>
+  <body>
+    <h1>3D Polygon Normalization</h1>
 
-    <script>
+    <h2>Concept Training</h2>
+    <div>
+      <div class="grouping">
+        <div id="rotateContainer" class="chart"></div>
+      </div>
+      <div class="stepControls">
+        <div class="creators">
+          <p>Create</p>
+          <button id="similarTriangles">Similar Triangles</button>
+          <button id="randomTriangles">Random Triangles</button>
+          <button id="exactPolies">Exact Poly Shapes</button>
+        </div>
+        <div>
+          <button id="originGoalPoly">Move Goal to Origin</button>
+          <button id="originInputPoly">Move Input to Origin</button>
+          <button id="alignGoalPoly">Align Goal Secondary</button>
+          <button id="alignInputPoly">Align Input Secondary</button>
+          <button id="rotateToGoal">Rotate Input to Goal</button>
+        </div>
+      </div>
+    </div>
+    <div class="funland">
+      <p>Mod</p>
+      <button id="rotateX">Rotate X</button>
+      <button id="rotateY">Rotate Y</button>
+      <button id="rotateZ">Rotate Z</button>
+    </div>
+    <hr />
+    <div id="squeezer">
+      <div class="poseGroup">
+        <div class="grouping">
+          <h2>Input</h2>
+          <div id="inputContainer" class="chart"></div>
+        </div>
+        <div class="grouping">
+          <h2>Goal</h2>
+          <div id="goalContainer" class="chart"></div>
+        </div>
+        <div class="grouping">
+          <h2>Transformed</h2>
+          <div id="transformedContainer" class="chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="runCode">Process stuff</button>
+      <button id="spinEm">Spin Em</button>
+    </div>
+    <script type="module">
+      import { ANCHOR_POINTS } from './constants.js'
+
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
       // You could simply rotate and align the 3 points used and then create a custom transform matrix along the way.
       // That derived matrix could batch-apply to all remaining points in one cross product transform.
 
-      // These points will be added to scale the plot, but will be painted white to hide
-      const ANCHOR_POINTS = [
-        [0, 0, 0],
-        [0, 1, 0],
-        [-1, 0, 0],
-        [-1, -1, 0],
-      ]
       function spinEm() {
         // window.inputContainer.resize()
         window.inputContainer.startOrbitAnimation &&
@@ -155,7 +197,7 @@
           totalSequence = [...totalSequence, ...bumpedSequences]
         })
 
-        glDataset = new ScatterGL.Dataset(
+        const glDataset = new ScatterGL.Dataset(
           [...dataset, ...ANCHOR_POINTS],
           pointsMeta
         )
@@ -203,13 +245,9 @@
           sequences: [...random.sequences],
         }
         window.R = [random, lock]
-        //drawMulti('rotateContainer', [random, lock])
         rotate('x', 0, Math.random())
         rotate('y', 0, Math.random())
         const tetra = rotate('z', 0, Math.random())
-        // drawMulti('rotateContainer', [random, tetra])
-        // store R in global for debug accessibility
-        //window.R = [random, tetra]
       }
 
       function originPoly(polyIndex = 0) {
@@ -281,13 +319,13 @@
         }
 
         // Debugging math
-        const x = polygon.polyPoints[1][0]
-        const y = polygon.polyPoints[1][1]
-        const newX = tf.add(tf.mul(theta.cos(), x), tf.mul(theta.sin(), y))
-        const newY = tf.sub(tf.mul(theta.sin(), x), tf.mul(theta.cos(), y))
-        const solvedX = newX.arraySync()
-        const solvedY = newY.arraySync()
-        console.log({ solvedX, solvedY })
+        // const x = polygon.polyPoints[1][0]
+        // const y = polygon.polyPoints[1][1]
+        // const newX = tf.add(tf.mul(theta.cos(), x), tf.mul(theta.sin(), y))
+        // const newY = tf.sub(tf.mul(theta.sin(), x), tf.mul(theta.cos(), y))
+        // const solvedX = newX.arraySync()
+        // const solvedY = newY.arraySync()
+        // console.log({ solvedX, solvedY })
 
         polygon.polyPoints.map((alignPoint, alignPointIndex) => {
           const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
@@ -351,59 +389,55 @@
         }
         drawMulti('transformedContainer', [transformedPolygon])
       }
+
+      // Make Buttons Work
+      document
+        .getElementById('similarTriangles')
+        .addEventListener('click', createStandard)
+
+      document
+        .getElementById('randomTriangles')
+        .addEventListener('click', createR)
+
+      document
+        .getElementById('exactPolies')
+        .addEventListener('click', () => createT(8))
+
+      document
+        .getElementById('originGoalPoly')
+        .addEventListener('click', () => originPoly(1))
+
+      document
+        .getElementById('originInputPoly')
+        .addEventListener('click', () => originPoly(0))
+
+      document
+        .getElementById('alignInputPoly')
+        .addEventListener('click', () => alignPoly(0))
+
+      document
+        .getElementById('alignGoalPoly')
+        .addEventListener('click', () => alignPoly(1))
+
+      document
+        .getElementById('rotateToGoal')
+        .addEventListener('click', rotateToGoal)
+
+      document
+        .getElementById('rotateX')
+        .addEventListener('click', () => rotate('x'))
+
+      document
+        .getElementById('rotateY')
+        .addEventListener('click', () => rotate('y'))
+
+      document
+        .getElementById('rotateZ')
+        .addEventListener('click', () => rotate('z'))
+
+      document.getElementById('runCode').addEventListener('click', runCode)
+
+      document.getElementById('spinEm').addEventListener('click', spinEm)
     </script>
-  </head>
-  <body>
-    <h1>3D Polygon Normalization</h1>
-
-    <h2>Concept Training</h2>
-    <div>
-      <div class="grouping">
-        <div id="rotateContainer" class="chart"></div>
-      </div>
-      <div class="stepControls">
-        <div class="creators">
-          <p>Create</p>
-          <button onclick="createStandard()">Similar Triangles</button>
-          <button onclick="createR()">Random Triangles</button>
-          <button onclick="createT(8)">Exact Poly Shapes</button>
-        </div>
-        <div>
-          <button onclick="originPoly(1)">Move Goal to Origin</button>
-          <button onclick="originPoly(0)">Move Input to Origin</button>
-          <button onclick="alignPoly(1)">Align Goal Secondary</button>
-          <button onclick="alignPoly(0)">Align Input Secondary</button>
-          <button onclick="rotateToGoal()">Rotate Input to Goal</button>
-        </div>
-      </div>
-    </div>
-    <div class="funland">
-      <p>Mod</p>
-      <button onclick="rotate('x')">Rotate X</button>
-      <button onclick="rotate('y')">Rotate Y</button>
-      <button onclick="rotate('z')">Rotate Z</button>
-    </div>
-    <hr />
-    <div id="squeezer">
-      <div class="poseGroup">
-        <div class="grouping">
-          <h2>Input</h2>
-          <div id="inputContainer" class="chart"></div>
-        </div>
-        <div class="grouping">
-          <h2>Goal</h2>
-          <div id="goalContainer" class="chart"></div>
-        </div>
-        <div class="grouping">
-          <h2>Transformed</h2>
-          <div id="transformedContainer" class="chart"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="controls">
-      <button onclick="runCode()">Process stuff</button>
-      <button onclick="spinEm()">Spin Em</button>
-    </div>
   </body>
 </html>

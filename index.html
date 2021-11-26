@@ -42,6 +42,7 @@
       <button id="rotateX">Rotate X</button>
       <button id="rotateY">Rotate Y</button>
       <button id="rotateZ">Rotate Z</button>
+      <button id="spinEm">Spin 3D</button>
     </div>
     <hr />
     <div id="squeezer">
@@ -62,18 +63,22 @@
     </div>
 
     <div id="controls">
-      <button id="runCode">Process stuff</button>
-      <button id="spinEm">Spin Em</button>
+      <button id="runCode">TODO: Lock 3D Pose</button>
     </div>
     <script type="module">
       import { ANCHOR_POINTS } from './constants.js'
+      import {
+        selectColor,
+        simpleTriangle,
+        generateMeta,
+        create3DPolygon,
+      } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
       // You could simply rotate and align the 3 points used and then create a custom transform matrix along the way.
       // That derived matrix could batch-apply to all remaining points in one cross product transform.
 
       function spinEm() {
-        // window.inputContainer.resize()
         window.inputContainer.startOrbitAnimation &&
           window.inputContainer.startOrbitAnimation()
         window.goalContainer.startOrbitAnimation &&
@@ -82,90 +87,6 @@
           window.transformedContainer.startOrbitAnimation()
         window.rotateContainer.startOrbitAnimation &&
           window.rotateContainer.startOrbitAnimation()
-      }
-      function selectColor(colorNum, totalPoints, colors) {
-        if (colors < 1) colors = 1 // avoid divide by zero
-        if (colorNum >= totalPoints) return 'white'
-        if (colorNum >= colors) return 'black'
-        return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
-      }
-
-      function simpleTriangle(delta = [1, 1, 1]) {
-        const polyPoints = [
-          [-0.5, -0.5, -0.5],
-          [0.5, 0.5, 0.5],
-          [1, 0, 1],
-        ]
-        polyPoints.forEach((point, i) => {
-          polyPoints[i][0] *= delta[0]
-          polyPoints[i][1] *= delta[1]
-          polyPoints[i][2] *= delta[2]
-        })
-
-        const metadata = [
-          {
-            labelIndex: 0,
-            label: polyPoints[0],
-          },
-          {
-            labelIndex: 1,
-            label: polyPoints[1],
-          },
-          {
-            labelIndex: 2,
-            label: polyPoints[2],
-          },
-        ]
-        const sequences = [
-          {
-            indices: [0, 1],
-          },
-          {
-            indices: [1, 2],
-          },
-          {
-            indices: [2, 0],
-          },
-        ]
-        return {
-          metadata,
-          sequences,
-          polyPoints,
-        }
-      }
-
-      function generateMeta(polyPoints) {
-        const metadata = []
-        const sequences = []
-        for (let i = 0; i < polyPoints.length; i++) {
-          // Add point labels
-          metadata.push({
-            labelIndex: i,
-            label: `X: ${Number(polyPoints[i][0]).toFixed(1)} Y: ${Number(
-              polyPoints[i][1]
-            ).toFixed(1)} Z: ${Number(polyPoints[i][2]).toFixed(1)}`,
-          })
-
-          // Draw a line
-          sequences.push({ indices: [i, (i + 1) % polyPoints.length] })
-        }
-        return { metadata, sequences }
-      }
-
-      function create3DPolygon(points = 3) {
-        // Create *points* number of points 3D space (X, Y, Z)
-        const polyPoints = Array.from({ length: points }, () => [
-          Math.random(),
-          Math.random(),
-          Math.random(),
-        ])
-
-        const { metadata, sequences } = generateMeta(polyPoints)
-        return {
-          metadata,
-          sequences,
-          polyPoints,
-        }
       }
 
       function drawMulti(destination, polies) {
@@ -318,15 +239,6 @@
           ])
         }
 
-        // Debugging math
-        // const x = polygon.polyPoints[1][0]
-        // const y = polygon.polyPoints[1][1]
-        // const newX = tf.add(tf.mul(theta.cos(), x), tf.mul(theta.sin(), y))
-        // const newY = tf.sub(tf.mul(theta.sin(), x), tf.mul(theta.cos(), y))
-        // const solvedX = newX.arraySync()
-        // const solvedY = newY.arraySync()
-        // console.log({ solvedX, solvedY })
-
         polygon.polyPoints.map((alignPoint, alignPointIndex) => {
           const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
           const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign)
@@ -339,55 +251,6 @@
 
         window.R = R
         return polygon
-      }
-
-      async function runCode() {
-        const inputPolygon = create3DPolygon(3)
-        drawMulti('inputContainer', [inputPolygon])
-        const goalPolygon = create3DPolygon(3)
-        drawMulti('goalContainer', [goalPolygon])
-
-        // Step 1:  Re-origin on focal point
-        const fixPointIndex = 0
-        const focalPoint = goalPolygon.polyPoints[fixPointIndex]
-        const transformVector = focalPoint.map(
-          (v, i) => v - inputPolygon.polyPoints[fixPointIndex][i]
-        )
-        const polyPoints = inputPolygon.polyPoints.map((point) => {
-          return point.map((coord, i) => coord + transformVector[i])
-        })
-
-        // Step 2: 2D Rotate around focal point to align with alignPoint
-        const alignPointIndex = 1
-        const alignPoint = goalPolygon.polyPoints[alignPointIndex]
-        const rotationPoint = polyPoints[alignPointIndex]
-        // Calculate vector angle using (u*v)/|u||v|
-        const dotprod = tf.dot(focalPoint, alignPoint)
-        const magnitude1 = tf.norm(alignPoint)
-        const magnitude2 = tf.norm(focalPoint)
-        const theta = tf.acos(dotprod.div(magnitude1.mul(magnitude2)))
-        // Create rotation matrix with theta
-        const tc = theta.cos().arraySync()
-        const ts = theta.sin().arraySync()
-        // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
-        const rx = tf.tensor([
-          [1, 0, 0],
-          [0, tc, -ts],
-          [0, ts, tc],
-        ])
-        const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
-        const newAlignPoint = tf.matMul(rx, tensorAlign)
-        const movedPoint = newAlignPoint.arraySync()
-        polyPoints[alignPointIndex] = movedPoint
-
-        // Step 3: Draw transformed polygon
-        const { metadata, sequences } = generateMeta(polyPoints)
-        const transformedPolygon = {
-          metadata,
-          sequences,
-          polyPoints,
-        }
-        drawMulti('transformedContainer', [transformedPolygon])
       }
 
       // Make Buttons Work
@@ -434,8 +297,6 @@
       document
         .getElementById('rotateZ')
         .addEventListener('click', () => rotate('z'))
-
-      document.getElementById('runCode').addEventListener('click', runCode)
 
       document.getElementById('spinEm').addEventListener('click', spinEm)
     </script>

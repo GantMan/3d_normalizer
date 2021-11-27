@@ -45,6 +45,28 @@
       <button id="spinEm">Spin 3D</button>
     </div>
     <hr />
+    <h2>Pose Application</h2>
+    <div class="stepControls">
+      <div>
+        <button id="loadPoses">Load 3D Poses</button>
+        <label for="fixpoint">Fixpoint</label>
+        <select name="fixpoint">
+          <option value="x">0</option>
+          <option value="x">1</option>
+        </select>
+        <label for="Align Point">Align Point</label>
+        <select name="Align Point">
+          <option value="x">0</option>
+          <option value="x">1</option>
+        </select>
+        <label for="Rotation Point">Rotation Point</label>
+        <select name="Rotation Point">
+          <option value="x">0</option>
+          <option value="x">1</option>
+        </select>
+        <button id="runProcess">Run Process Normalization</button>
+      </div>
+    </div>
     <div id="squeezer">
       <div class="poseGroup">
         <div class="grouping">
@@ -62,9 +84,6 @@
       </div>
     </div>
 
-    <div id="controls">
-      <button id="runCode">TODO: Lock 3D Pose</button>
-    </div>
     <script type="module">
       import { ANCHOR_POINTS } from './constants.js'
       import {
@@ -298,7 +317,13 @@
         .getElementById('rotateZ')
         .addEventListener('click', () => rotate('z'))
 
-      document.getElementById('spinEm').addEventListener('click', spinEm)
+      document
+        .getElementById('loadPoses')
+        .addEventListener('click', () => alert('Load Poses Coming Soon'))
+
+      document
+        .getElementById('runProcess')
+        .addEventListener('click', () => alert('Normalization Coming Soon'))
     </script>
   </body>
 </html>

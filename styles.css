@@ -99,3 +99,23 @@ body {
   padding: 0 10px;
   margin: 2px 5px;
 }
+
+.stepControls label {
+  border-bottom: 1px solid rgb(179, 179, 179);
+  margin: 0 5px 0 10px;
+}
+
+.stepControls select {
+  height: 36px;
+  font-size: medium;
+  padding: 0 5px;
+}
+
+#runProcess {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 5px;
+  margin: 0 10px;
+  font-style: italic;
+}

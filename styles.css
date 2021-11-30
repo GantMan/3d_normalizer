@@ -41,6 +41,7 @@ body {
 .chart {
   height: 500px;
   background-color: aliceblue;
+  position: relative;
 }
 
 .grouping {
@@ -118,4 +119,26 @@ body {
   border-radius: 5px;
   margin: 0 10px;
   font-style: italic;
+}
+
+#loadPoses {
+  margin: 0 0 0 10px;
+}
+
+.focal,
+.align,
+.rotate {
+  padding: 10px;
+}
+
+.focal {
+  background-color: #ff0000;
+}
+
+.align {
+  background-color: #c50efd;
+}
+
+.rotate {
+  background-color: #0ecdfd;
 }

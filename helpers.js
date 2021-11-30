@@ -12,11 +12,16 @@ export function selectColor(colorNum, totalPoints, colors, pose) {
   // Color for polygon
   if (!pose) return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
 
-  // Color for pose
+  // highlight key pose points
+  if (colorNum === pose.focalPoint) return '#ff0000'
+  if (colorNum === pose.alignPoint) return '#C50EFD'
+  if (colorNum === pose.rotatePoint) return '#0ECDFD'
+
+  // Color sides of pose
   const keypointInd = BLAZEPOSE_KEYPOINTS_BY_SIDE
-  if (colorNum === 0) return '#ff0000'
-  if (keypointInd.left.indexOf(colorNum) > -1) return '#00ff00'
-  if (keypointInd.right.indexOf(colorNum) > -1) return '#ffa500'
+  if (colorNum === 0) return 'yellow'
+  if (keypointInd.left.indexOf(colorNum) > -1) return '#07830F'
+  if (keypointInd.right.indexOf(colorNum) > -1) return '#AF6B04'
 }
 
 export function simpleTriangle(delta = [1, 1, 1]) {

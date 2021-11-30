@@ -48,23 +48,122 @@
     <h2>Pose Application</h2>
     <div class="stepControls">
       <div>
+        <span>
+          <label for="focalPoint">Focal Point</label>
+          <select name="focalPoint" class="focal">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6" selected>6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+          </select>
+        </span>
+        <span>
+          <label for="Align Point">Align Point</label>
+          <select name="Align Point" class="align">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+          </select>
+        </span>
+        <span>
+          <label for="Rotation Point">Rotation Point</label>
+          <select name="Rotation Point" class="rotate">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12" selected>12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+          </select>
+        </span>
         <button id="loadPoses">Load 3D Poses</button>
-        <label for="fixpoint">Fixpoint</label>
-        <select name="fixpoint">
-          <option value="x">0</option>
-          <option value="x">1</option>
-        </select>
-        <label for="Align Point">Align Point</label>
-        <select name="Align Point">
-          <option value="x">0</option>
-          <option value="x">1</option>
-        </select>
-        <label for="Rotation Point">Rotation Point</label>
-        <select name="Rotation Point">
-          <option value="x">0</option>
-          <option value="x">1</option>
-        </select>
-        <button id="runProcess">Run Process Normalization</button>
+        <button id="runProcess">Run Normalization Process</button>
       </div>
     </div>
     <div id="squeezer">
@@ -278,18 +377,39 @@
       }
 
       function loadPoses() {
-        const polyPoints = POSES.pose1
         const sequences = BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS.map((pair) => ({
           indices: pair,
         }))
 
-        const poseData = {
+        const inputPose = {
           metadata: [],
           sequences,
-          polyPoints,
+          polyPoints: POSES.pose1,
         }
-        drawMulti('inputContainer', [poseData], true)
-        window.P = [poseData]
+
+        const goalPose = {
+          metadata: [],
+          sequences,
+          polyPoints: POSES.pose2,
+        }
+
+        const posePoints = {
+          focalPoint: 12,
+          alignPoint: 11,
+          rotatePoint: 24,
+        }
+
+        drawMulti('inputContainer', [inputPose], posePoints)
+
+        drawMulti('goalContainer', [goalPose], posePoints)
+
+        window.P = [inputPose, goalPose]
+      }
+
+      function processPoses() {
+        const P = window.P
+
+        drawMulti('transformedContainer', P, true)
       }
 
       // Make Buttons Work
@@ -342,7 +462,7 @@
 
       document
         .getElementById('runProcess')
-        .addEventListener('click', () => alert('Normalization Coming Soon'))
+        .addEventListener('click', processPoses)
     </script>
   </body>
 </html>

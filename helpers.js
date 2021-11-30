@@ -1,8 +1,22 @@
-export function selectColor(colorNum, totalPoints, colors) {
+import {
+  BLAZEPOSE_KEYPOINTS_BY_SIDE,
+  BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS,
+} from './constants.js'
+
+// Stylizes points colors for multiple polies or poses
+export function selectColor(colorNum, totalPoints, colors, pose) {
   if (colors < 1) colors = 1 // avoid divide by zero
   if (colorNum >= totalPoints) return 'white'
   if (colorNum >= colors) return 'black'
-  return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
+
+  // Color for polygon
+  if (!pose) return 'hsl(' + ((colorNum * (360 / colors)) % 360) + ',100%,50%)'
+
+  // Color for pose
+  const keypointInd = BLAZEPOSE_KEYPOINTS_BY_SIDE
+  if (colorNum === 0) return '#ff0000'
+  if (keypointInd.left.indexOf(colorNum) > -1) return '#00ff00'
+  if (keypointInd.right.indexOf(colorNum) > -1) return '#ffa500'
 }
 
 export function simpleTriangle(delta = [1, 1, 1]) {
@@ -51,7 +65,7 @@ export function simpleTriangle(delta = [1, 1, 1]) {
 
 export function generateMeta(polyPoints) {
   const metadata = []
-  const sequences = []
+  let sequences = []
   for (let i = 0; i < polyPoints.length; i++) {
     // Add point labels
     metadata.push({
@@ -64,6 +78,7 @@ export function generateMeta(polyPoints) {
     // Draw a line
     sequences.push({ indices: [i, (i + 1) % polyPoints.length] })
   }
+
   return { metadata, sequences }
 }
 

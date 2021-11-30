@@ -87,16 +87,15 @@
     <script type="module">
       import {
         BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS,
-        BLAZEPOSE_KEYPOINTS_BY_SIDE,
         POSES,
         ANCHOR_POINTS,
-      } from "./constants.js";
+      } from './constants.js'
       import {
         selectColor,
         simpleTriangle,
         generateMeta,
         create3DPolygon,
-      } from "./helpers.js";
+      } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
       // You could simply rotate and align the 3 points used and then create a custom transform matrix along the way.
@@ -104,268 +103,246 @@
 
       function spinEm() {
         window.inputContainer.startOrbitAnimation &&
-          window.inputContainer.startOrbitAnimation();
+          window.inputContainer.startOrbitAnimation()
         window.goalContainer.startOrbitAnimation &&
-          window.goalContainer.startOrbitAnimation();
+          window.goalContainer.startOrbitAnimation()
         window.transformedContainer.startOrbitAnimation &&
-          window.transformedContainer.startOrbitAnimation();
+          window.transformedContainer.startOrbitAnimation()
         window.rotateContainer.startOrbitAnimation &&
-          window.rotateContainer.startOrbitAnimation();
+          window.rotateContainer.startOrbitAnimation()
       }
 
-      function drawMulti(destination, polies) {
+      function drawMulti(destination, polies, pose = false) {
         // Create scatter graph
-        const containerElement = document.getElementById(destination);
+        const containerElement = document.getElementById(destination)
         // if it exists grab the existing one
         const scatterGL = window[destination].sequences
           ? window[destination]
-          : new ScatterGL(containerElement);
+          : new ScatterGL(containerElement)
 
-        let pointSize = 0;
-        let totalSequence = [];
-        let dataset = [];
-        let pointsMeta = [];
+        let pointSize = 0
+        let totalSequence = []
+        let dataset = []
+        let pointsMeta = []
         polies.forEach((polygon) => {
-          const { polyPoints, sequences } = polygon;
-          const { metadata } = generateMeta(polyPoints); // Regenerate meta for changes
-          dataset = [...dataset, ...polyPoints];
+          const { polyPoints, sequences } = polygon
+          const { metadata } = generateMeta(polyPoints) // Regenerate meta for changes
+          dataset = [...dataset, ...polyPoints]
           const bumpedSequences = sequences.map((sequence) => {
-            const bumped = sequence.indices.map((index) => index + pointSize);
-            return { indices: bumped };
-          });
+            const bumped = sequence.indices.map((index) => index + pointSize)
+            return { indices: bumped }
+          })
           const metaMiddle = metadata.map((meta, i) => ({
             labelIndex: pointSize,
             label: meta.label,
-          }));
-          pointSize += polyPoints.length;
-          pointsMeta = [...pointsMeta, ...metaMiddle];
-          totalSequence = [...totalSequence, ...bumpedSequences];
-        });
+          }))
+          pointSize += polyPoints.length
+          pointsMeta = [...pointsMeta, ...metaMiddle]
+          totalSequence = [...totalSequence, ...bumpedSequences]
+        })
 
         const glDataset = new ScatterGL.Dataset(
           [...dataset, ...ANCHOR_POINTS],
           pointsMeta
-        );
+        )
 
         // Add data to scatter graph + lines
         if (window[destination].sequences) {
-          scatterGL.updateDataset(glDataset, totalSequence);
+          scatterGL.updateDataset(glDataset, totalSequence)
         } else {
-          scatterGL.render(glDataset);
-          scatterGL.setSequences(totalSequence);
+          scatterGL.render(glDataset)
+          scatterGL.setSequences(totalSequence)
         }
+
         scatterGL.setPointColorer((index) =>
-          selectColor(index, pointSize, polies[0].polyPoints.length)
-        );
-        scatterGL.scatterPlot.setPolylineOpacities(
-          new Array(pointSize).fill(1)
-        );
+          selectColor(index, pointSize, polies[0].polyPoints.length, pose)
+        )
+        scatterGL.scatterPlot.setPolylineOpacities(new Array(pointSize).fill(1))
 
         // store on Global for debug accessibility
-        window[destination] = scatterGL;
-        console.log({ destination, pointSize, totalSequence, dataset });
+        window[destination] = scatterGL
+        console.log({ destination, pointSize, totalSequence, dataset })
       }
 
       function createStandard() {
-        const random = simpleTriangle([1, 1, 0.2]);
-        const triangle = simpleTriangle();
-        drawMulti("rotateContainer", [random, triangle]);
+        const random = simpleTriangle([1, 1, 0.2])
+        const triangle = simpleTriangle()
+        drawMulti('rotateContainer', [random, triangle])
         // store R in global for debug accessibility
-        window.R = [random, triangle];
+        window.R = [random, triangle]
       }
 
       function createR() {
-        const random = create3DPolygon(3);
-        const triangle = create3DPolygon(3);
+        const random = create3DPolygon(3)
+        const triangle = create3DPolygon(3)
 
-        drawMulti("rotateContainer", [random, triangle]);
+        drawMulti('rotateContainer', [random, triangle])
         // store R in global for debug accessibility
-        window.R = [random, triangle];
+        window.R = [random, triangle]
       }
 
       function createT(pointCount = 6) {
-        let random = create3DPolygon(pointCount);
-        console.log({ random });
+        let random = create3DPolygon(pointCount)
+        console.log({ random })
         const lock = {
           polyPoints: [...random.polyPoints],
           metadata: [...random.metadata],
           sequences: [...random.sequences],
-        };
-        window.R = [random, lock];
-        rotate("x", 0, Math.random());
-        rotate("y", 0, Math.random());
-        const tetra = rotate("z", 0, Math.random());
+        }
+        window.R = [random, lock]
+        rotate('x', 0, Math.random())
+        rotate('y', 0, Math.random())
+        const tetra = rotate('z', 0, Math.random())
       }
 
       function originPoly(polyIndex = 0) {
-        const R = window.R;
-        const polygon = R[polyIndex];
-        const focalPoint = polygon.polyPoints[0];
+        const R = window.R
+        const polygon = R[polyIndex]
+        const focalPoint = polygon.polyPoints[0]
         // This is a non-vector translation to origin
         polygon.polyPoints.map((point, idx) => {
-          polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i]);
-        });
+          polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
+        })
         // A vector translation to origin would be
         // https://bit.ly/3DQbNbZ
-        R[polyIndex] = polygon;
-        drawMulti("rotateContainer", R);
-        window.R = R;
+        R[polyIndex] = polygon
+        drawMulti('rotateContainer', R)
+        window.R = R
       }
 
       function alignPoly(polyIndex = 0) {
-        const R = window.R;
-        let polygon = R[polyIndex];
-        let alignPoint = polygon.polyPoints[1];
+        const R = window.R
+        let polygon = R[polyIndex]
+        let alignPoint = polygon.polyPoints[1]
 
-        const xang = Math.atan2(alignPoint[1], alignPoint[0]);
-        polygon = rotate("z", polyIndex, xang);
+        const xang = Math.atan2(alignPoint[1], alignPoint[0])
+        polygon = rotate('z', polyIndex, xang)
 
-        alignPoint = polygon.polyPoints[1];
-        const zang = Math.atan2(alignPoint[2], alignPoint[0]);
-        rotate("y", polyIndex, zang);
+        alignPoint = polygon.polyPoints[1]
+        const zang = Math.atan2(alignPoint[2], alignPoint[0])
+        rotate('y', polyIndex, zang)
       }
 
       function rotateToGoal() {
-        const R = window.R;
-        const rotatePoint = R[0].polyPoints[2];
-        const goalRotatePoint = R[1].polyPoints[2];
+        const R = window.R
+        const rotatePoint = R[0].polyPoints[2]
+        const goalRotatePoint = R[1].polyPoints[2]
 
-        const myang = Math.atan2(rotatePoint[2], rotatePoint[1]);
-        const byang = Math.atan2(goalRotatePoint[2], goalRotatePoint[1]);
-        const yang = byang - myang;
-        rotate("x", 0, yang);
+        const myang = Math.atan2(rotatePoint[2], rotatePoint[1])
+        const byang = Math.atan2(goalRotatePoint[2], goalRotatePoint[1])
+        const yang = byang - myang
+        rotate('x', 0, yang)
       }
 
       function rotate(axis, polyIndex = 0, rads = 0.1) {
-        const R = window.R;
-        const polygon = R[polyIndex];
-        const theta = tf.scalar(rads);
-        const tc = theta.cos().arraySync();
-        const ts = theta.sin().arraySync();
+        const R = window.R
+        const polygon = R[polyIndex]
+        const theta = tf.scalar(rads)
+        const tc = theta.cos().arraySync()
+        const ts = theta.sin().arraySync()
         // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
         // https://robotics.stackexchange.com/questions/10702/rotation-matrix-sign-convention-confusion
-        let rotateMatrix; // Not the normal right-hand rule version
-        if (axis === "x") {
+        let rotateMatrix // Not the normal right-hand rule version
+        if (axis === 'x') {
           rotateMatrix = tf.tensor([
             [1, 0, 0],
             [0, tc, -ts],
             [0, ts, tc],
-          ]);
-        } else if (axis === "y") {
+          ])
+        } else if (axis === 'y') {
           rotateMatrix = tf.tensor([
             [tc, 0, ts],
             [0, 1, 0],
             [-ts, 0, tc],
-          ]);
-        } else if (axis === "z") {
+          ])
+        } else if (axis === 'z') {
           rotateMatrix = tf.tensor([
             [tc, ts, 0],
             [-ts, tc, 0],
             [0, 0, 1],
-          ]);
+          ])
         }
 
         polygon.polyPoints.map((alignPoint, alignPointIndex) => {
-          const tensorAlign = tf.tensor(alignPoint).reshape([3, 1]);
-          const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign);
-          const movedPoint = newAlignPoint.arraySync();
-          polygon.polyPoints[alignPointIndex] = movedPoint;
-        });
+          const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
+          const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign)
+          const movedPoint = newAlignPoint.arraySync()
+          polygon.polyPoints[alignPointIndex] = movedPoint
+        })
 
-        R[polyIndex] = polygon;
-        drawMulti("rotateContainer", R);
+        R[polyIndex] = polygon
+        drawMulti('rotateContainer', R)
 
-        window.R = R;
-        return polygon;
+        window.R = R
+        return polygon
       }
 
       function loadPoses() {
-        const containerElement = document.getElementById("inputContainer");
-        const scatterGL = new ScatterGL(containerElement);
-        const chosenPose = POSES.pose1
-        const dataset = new ScatterGL.Dataset([
-          ...chosenPose,
-          ...ANCHOR_POINTS,
-        ]);
+        const polyPoints = POSES.pose1
         const sequences = BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS.map((pair) => ({
           indices: pair,
-        }));
+        }))
 
-        const keypointInd = BLAZEPOSE_KEYPOINTS_BY_SIDE;
-        scatterGL.setPointColorer((i) => {
-          if (chosenPose[i] == null) {
-            // hide anchor points
-            return "#ffffff";
-          }
-          if (i === 0) {
-            return "#ff0000" /* Red */;
-          }
-          if (keypointInd.left.indexOf(i) > -1) {
-            return "#00ff00" /* Green */;
-          }
-          if (keypointInd.right.indexOf(i) > -1) {
-            return "#ffa500" /* Orange */;
-          }
-        });
-
-        scatterGL.render(dataset);
-        scatterGL.setSequences(sequences);
-        // Must be after render
-        scatterGL.scatterPlot.setPolylineOpacities(
-          new Array(sequences.length).fill(1)
-        );
+        const poseData = {
+          metadata: [],
+          sequences,
+          polyPoints,
+        }
+        drawMulti('inputContainer', [poseData], true)
+        window.P = [poseData]
       }
 
       // Make Buttons Work
       document
-        .getElementById("similarTriangles")
-        .addEventListener("click", createStandard);
+        .getElementById('similarTriangles')
+        .addEventListener('click', createStandard)
 
       document
-        .getElementById("randomTriangles")
-        .addEventListener("click", createR);
+        .getElementById('randomTriangles')
+        .addEventListener('click', createR)
 
       document
-        .getElementById("exactPolies")
-        .addEventListener("click", () => createT(8));
+        .getElementById('exactPolies')
+        .addEventListener('click', () => createT(8))
 
       document
-        .getElementById("originGoalPoly")
-        .addEventListener("click", () => originPoly(1));
+        .getElementById('originGoalPoly')
+        .addEventListener('click', () => originPoly(1))
 
       document
-        .getElementById("originInputPoly")
-        .addEventListener("click", () => originPoly(0));
+        .getElementById('originInputPoly')
+        .addEventListener('click', () => originPoly(0))
 
       document
-        .getElementById("alignInputPoly")
-        .addEventListener("click", () => alignPoly(0));
+        .getElementById('alignInputPoly')
+        .addEventListener('click', () => alignPoly(0))
 
       document
-        .getElementById("alignGoalPoly")
-        .addEventListener("click", () => alignPoly(1));
+        .getElementById('alignGoalPoly')
+        .addEventListener('click', () => alignPoly(1))
 
       document
-        .getElementById("rotateToGoal")
-        .addEventListener("click", rotateToGoal);
+        .getElementById('rotateToGoal')
+        .addEventListener('click', rotateToGoal)
 
       document
-        .getElementById("rotateX")
-        .addEventListener("click", () => rotate("x"));
+        .getElementById('rotateX')
+        .addEventListener('click', () => rotate('x'))
 
       document
-        .getElementById("rotateY")
-        .addEventListener("click", () => rotate("y"));
+        .getElementById('rotateY')
+        .addEventListener('click', () => rotate('y'))
 
       document
-        .getElementById("rotateZ")
-        .addEventListener("click", () => rotate("z"));
+        .getElementById('rotateZ')
+        .addEventListener('click', () => rotate('z'))
 
-      document.getElementById("loadPoses").addEventListener("click", loadPoses);
+      document.getElementById('spinEm').addEventListener('click', spinEm)
+      document.getElementById('loadPoses').addEventListener('click', loadPoses)
 
       document
-        .getElementById("runProcess")
-        .addEventListener("click", () => alert("Normalization Coming Soon"));
+        .getElementById('runProcess')
+        .addEventListener('click', () => alert('Normalization Coming Soon'))
     </script>
   </body>
 </html>

@@ -48,6 +48,10 @@
     <h2>Pose Application</h2>
     <div class="stepControls">
       <div>
+        <span id="poseText"
+          >Pose Points
+          <img src="blaze_points.png" alt="blaze_points" id="poseImg" />
+        </span>
         <span>
           <label for="focalPoint">Focal Point</label>
           <select name="focalPoint" class="focal">
@@ -57,12 +61,12 @@
             <option value="3">3</option>
             <option value="4">4</option>
             <option value="5">5</option>
-            <option value="6" selected>6</option>
+            <option value="6">6</option>
             <option value="7">7</option>
             <option value="8">8</option>
             <option value="9">9</option>
             <option value="10">10</option>
-            <option value="11">11</option>
+            <option value="11" selected>11</option>
             <option value="12">12</option>
             <option value="13">13</option>
             <option value="14">14</option>
@@ -94,14 +98,14 @@
             <option value="2">2</option>
             <option value="3">3</option>
             <option value="4">4</option>
-            <option value="5" selected>5</option>
+            <option value="5">5</option>
             <option value="6">6</option>
             <option value="7">7</option>
             <option value="8">8</option>
             <option value="9">9</option>
             <option value="10">10</option>
             <option value="11">11</option>
-            <option value="12">12</option>
+            <option value="12" selected>12</option>
             <option value="13">13</option>
             <option value="14">14</option>
             <option value="15">15</option>
@@ -139,7 +143,7 @@
             <option value="9">9</option>
             <option value="10">10</option>
             <option value="11">11</option>
-            <option value="12" selected>12</option>
+            <option value="12">12</option>
             <option value="13">13</option>
             <option value="14">14</option>
             <option value="15">15</option>
@@ -150,7 +154,7 @@
             <option value="20">20</option>
             <option value="21">21</option>
             <option value="22">22</option>
-            <option value="23">23</option>
+            <option value="23" selected>23</option>
             <option value="24">24</option>
             <option value="25">25</option>
             <option value="26">26</option>
@@ -396,7 +400,7 @@
         const posePoints = {
           focalPoint: 12,
           alignPoint: 11,
-          rotatePoint: 24,
+          rotatePoint: 23,
         }
 
         drawMulti('inputContainer', [inputPose], posePoints)

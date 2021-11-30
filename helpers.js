@@ -21,7 +21,7 @@ export function selectColor(colorNum, totalPoints, colors, pose) {
   const keypointInd = BLAZEPOSE_KEYPOINTS_BY_SIDE
   if (colorNum === 0) return 'yellow'
   if (keypointInd.left.indexOf(colorNum) > -1) return '#07830F'
-  if (keypointInd.right.indexOf(colorNum) > -1) return '#AF6B04'
+  if (keypointInd.right.indexOf(colorNum) > -1) return '#ff8c00'
 }
 
 export function simpleTriangle(delta = [1, 1, 1]) {

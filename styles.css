@@ -142,3 +142,19 @@ body {
 .rotate {
   background-color: #0ecdfd;
 }
+
+#poseImg {
+  position: absolute;
+  z-index: 2;
+  width: 500px;
+  display: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#poseText:hover {
+  cursor: help;
+}
+
+#poseText:hover img {
+  display: block;
+}

@@ -167,7 +167,6 @@
           </select>
         </span>
         <button id="loadPoses">Load 3D Poses</button>
-        <button id="runProcess">Run Normalization Process</button>
       </div>
     </div>
     <div id="squeezer">
@@ -185,6 +184,9 @@
           <div id="transformedContainer" class="chart"></div>
         </div>
       </div>
+    </div>
+    <div class="stepControls">
+      <button id="runProcess">Run Normalization Process</button>
     </div>
 
     <script type="module">
@@ -413,7 +415,11 @@
       function processPoses() {
         const P = window.P
 
-        drawMulti('transformedContainer', P, true)
+        drawMulti('transformedContainer', P, {
+          focalPoint: 12,
+          alignPoint: 11,
+          rotatePoint: 23,
+        })
       }
 
       // Make Buttons Work

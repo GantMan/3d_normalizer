@@ -54,7 +54,7 @@
         </span>
         <span>
           <label for="focalPoint">Focal Point</label>
-          <select name="focalPoint" class="focal">
+          <select id="focalPoint" name="focalPoint" class="focal">
             <option value="0">0</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -92,7 +92,7 @@
         </span>
         <span>
           <label for="Align Point">Align Point</label>
-          <select name="Align Point" class="align">
+          <select id="alignPoint" name="Align Point" class="align">
             <option value="0">0</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -130,7 +130,7 @@
         </span>
         <span>
           <label for="Rotation Point">Rotation Point</label>
-          <select name="Rotation Point" class="rotate">
+          <select id="rotatePoint" name="Rotation Point" class="rotate">
             <option value="0">0</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -200,6 +200,7 @@
         simpleTriangle,
         generateMeta,
         create3DPolygon,
+        drawMulti,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -215,58 +216,6 @@
           window.transformedContainer.startOrbitAnimation()
         window.rotateContainer.startOrbitAnimation &&
           window.rotateContainer.startOrbitAnimation()
-      }
-
-      function drawMulti(destination, polies, pose = false) {
-        // Create scatter graph
-        const containerElement = document.getElementById(destination)
-        // if it exists grab the existing one
-        const scatterGL = window[destination].sequences
-          ? window[destination]
-          : new ScatterGL(containerElement)
-
-        let pointSize = 0
-        let totalSequence = []
-        let dataset = []
-        let pointsMeta = []
-        polies.forEach((polygon) => {
-          const { polyPoints, sequences } = polygon
-          const { metadata } = generateMeta(polyPoints) // Regenerate meta for changes
-          dataset = [...dataset, ...polyPoints]
-          const bumpedSequences = sequences.map((sequence) => {
-            const bumped = sequence.indices.map((index) => index + pointSize)
-            return { indices: bumped }
-          })
-          const metaMiddle = metadata.map((meta, i) => ({
-            labelIndex: pointSize,
-            label: meta.label,
-          }))
-          pointSize += polyPoints.length
-          pointsMeta = [...pointsMeta, ...metaMiddle]
-          totalSequence = [...totalSequence, ...bumpedSequences]
-        })
-
-        const glDataset = new ScatterGL.Dataset(
-          [...dataset, ...ANCHOR_POINTS],
-          pointsMeta
-        )
-
-        // Add data to scatter graph + lines
-        if (window[destination].sequences) {
-          scatterGL.updateDataset(glDataset, totalSequence)
-        } else {
-          scatterGL.render(glDataset)
-          scatterGL.setSequences(totalSequence)
-        }
-
-        scatterGL.setPointColorer((index) =>
-          selectColor(index, pointSize, polies[0].polyPoints.length, pose)
-        )
-        scatterGL.scatterPlot.setPolylineOpacities(new Array(pointSize).fill(1))
-
-        // store on Global for debug accessibility
-        window[destination] = scatterGL
-        console.log({ destination, pointSize, totalSequence, dataset })
       }
 
       function createStandard() {
@@ -288,7 +237,7 @@
 
       function createT(pointCount = 6) {
         let random = create3DPolygon(pointCount)
-        console.log({ random })
+
         const lock = {
           polyPoints: [...random.polyPoints],
           metadata: [...random.metadata],
@@ -297,7 +246,7 @@
         window.R = [random, lock]
         rotate('x', 0, Math.random())
         rotate('y', 0, Math.random())
-        const tetra = rotate('z', 0, Math.random())
+        rotate('z', 0, Math.random())
       }
 
       function originPoly(polyIndex = 0) {
@@ -400,9 +349,9 @@
         }
 
         const posePoints = {
-          focalPoint: 12,
-          alignPoint: 11,
-          rotatePoint: 23,
+          focalPoint: Number(document.getElementById('focalPoint').value),
+          alignPoint: Number(document.getElementById('alignPoint').value),
+          rotatePoint: Number(document.getElementById('rotatePoint').value),
         }
 
         drawMulti('inputContainer', [inputPose], posePoints)
@@ -412,14 +361,28 @@
         window.P = [inputPose, goalPose]
       }
 
+      function overlayPoses() {
+        const P = window.P
+
+        const posePoints = {
+          focalPoint: Number(document.getElementById('focalPoint').value),
+          alignPoint: Number(document.getElementById('alignPoint').value),
+          rotatePoint: Number(document.getElementById('rotatePoint').value),
+        }
+
+        drawMulti('transformedContainer', P, posePoints)
+      }
+
       function processPoses() {
         const P = window.P
 
-        drawMulti('transformedContainer', P, {
-          focalPoint: 12,
-          alignPoint: 11,
-          rotatePoint: 23,
-        })
+        const posePoints = {
+          focalPoint: Number(document.getElementById('focalPoint').value),
+          alignPoint: Number(document.getElementById('alignPoint').value),
+          rotatePoint: Number(document.getElementById('rotatePoint').value),
+        }
+
+        drawMulti('transformedContainer', P, posePoints)
       }
 
       // Make Buttons Work

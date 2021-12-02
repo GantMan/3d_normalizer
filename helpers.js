@@ -1,7 +1,4 @@
-import {
-  BLAZEPOSE_KEYPOINTS_BY_SIDE,
-  BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS,
-} from './constants.js'
+import { BLAZEPOSE_KEYPOINTS_BY_SIDE, ANCHOR_POINTS } from './constants.js'
 
 // Stylizes points colors for multiple polies or poses
 export function selectColor(colorNum, totalPoints, colors, pose) {
@@ -101,4 +98,56 @@ export function create3DPolygon(points = 3) {
     sequences,
     polyPoints,
   }
+}
+
+export function drawMulti(destination, polies, pose = false) {
+  // Create scatter graph
+  const containerElement = document.getElementById(destination)
+  // if it exists grab the existing one
+  const scatterGL = window[destination].sequences
+    ? window[destination]
+    : new ScatterGL(containerElement)
+
+  let pointSize = 0
+  let totalSequence = []
+  let dataset = []
+  let pointsMeta = []
+  polies.forEach((polygon) => {
+    const { polyPoints, sequences } = polygon
+    const { metadata } = generateMeta(polyPoints) // Regenerate meta for changes
+    dataset = [...dataset, ...polyPoints]
+    const bumpedSequences = sequences.map((sequence) => {
+      const bumped = sequence.indices.map((index) => index + pointSize)
+      return { indices: bumped }
+    })
+    const metaMiddle = metadata.map((meta, i) => ({
+      labelIndex: pointSize,
+      label: meta.label,
+    }))
+    pointSize += polyPoints.length
+    pointsMeta = [...pointsMeta, ...metaMiddle]
+    totalSequence = [...totalSequence, ...bumpedSequences]
+  })
+
+  const glDataset = new ScatterGL.Dataset(
+    [...dataset, ...ANCHOR_POINTS],
+    pointsMeta
+  )
+
+  // Add data to scatter graph + lines
+  if (window[destination].sequences) {
+    scatterGL.updateDataset(glDataset, totalSequence)
+  } else {
+    scatterGL.render(glDataset)
+    scatterGL.setSequences(totalSequence)
+  }
+
+  scatterGL.setPointColorer((index) =>
+    selectColor(index, pointSize, polies[0].polyPoints.length, pose)
+  )
+  scatterGL.scatterPlot.setPolylineOpacities(new Array(pointSize).fill(1))
+
+  // store on Global for debug accessibility
+  window[destination] = scatterGL
+  // console.log({ destination, pointSize, totalSequence, dataset })
 }

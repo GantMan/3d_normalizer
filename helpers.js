@@ -151,3 +151,75 @@ export function drawMulti(destination, polies, pose = false) {
   window[destination] = scatterGL
   // console.log({ destination, pointSize, totalSequence, dataset })
 }
+
+export function moveFocalPointToOrigin(polygon, focalPointIndex) {
+  const focalPoint = polygon.polyPoints[focalPointIndex]
+  // This is a non-tensor translation to origin
+  // A vector's linear translation to origin would be
+  // https://bit.ly/3DQbNbZ
+  polygon.polyPoints.map((point, idx) => {
+    polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
+  })
+  return polygon
+}
+
+export function matrixRotate(axis, polygon, angle) {
+  // in radians
+  const theta = tf.scalar(angle)
+  // TODO: Try to keep these as scalars to keep in GPU
+  const tc = theta.cos().arraySync()
+  const ts = theta.sin().arraySync()
+  // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+  // https://robotics.stackexchange.com/questions/10702/rotation-matrix-sign-convention-confusion
+  let rotateMatrix // Not the normal right-hand rule version
+  if (axis === 'x') {
+    rotateMatrix = tf.tensor([
+      [1, 0, 0],
+      [0, tc, -ts],
+      [0, ts, tc],
+    ])
+  } else if (axis === 'y') {
+    rotateMatrix = tf.tensor([
+      [tc, 0, ts],
+      [0, 1, 0],
+      [-ts, 0, tc],
+    ])
+  } else if (axis === 'z') {
+    rotateMatrix = tf.tensor([
+      [tc, ts, 0],
+      [-ts, tc, 0],
+      [0, 0, 1],
+    ])
+  }
+
+  // TODO: Multiple multiplications, just do one matrix mul for speed
+  polygon.polyPoints.map((startPoint, startPointIndex) => {
+    const tensorAlign = tf.tensor(startPoint).reshape([3, 1])
+    const rotatedPoint = tf.matMul(rotateMatrix, tensorAlign)
+    const movedPoint = rotatedPoint.arraySync()
+    polygon.polyPoints[startPointIndex] = movedPoint
+  })
+
+  return polygon
+}
+
+export function rotateToAlign(polygon, alignPointIndex) {
+  // Rotate Z to X axis
+  let alignPoint = polygon.polyPoints[alignPointIndex]
+  const xang = Math.atan2(alignPoint[1], alignPoint[0])
+  polygon = matrixRotate('z', polygon, xang)
+  // Rotate Y to X axis
+  alignPoint = polygon.polyPoints[1]
+  const zang = Math.atan2(alignPoint[2], alignPoint[0])
+  return matrixRotate('y', polygon, zang)
+}
+
+export function rotateToGoal(polygon, goalPolygon, rotateIndex) {
+  const rotatePoint = polygon.polyPoints[rotateIndex]
+  const goalRotatePoint = goalPolygon.polyPoints[rotateIndex]
+
+  const myang = Math.atan2(rotatePoint[2], rotatePoint[1])
+  const byang = Math.atan2(goalRotatePoint[2], goalRotatePoint[1])
+  const yang = byang - myang
+  return matrixRotate('x', polygon, yang)
+}

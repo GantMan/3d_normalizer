@@ -201,6 +201,10 @@
         generateMeta,
         create3DPolygon,
         drawMulti,
+        matrixRotate,
+        moveFocalPointToOrigin,
+        rotateToAlign,
+        rotateToGoal,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -251,82 +255,39 @@
 
       function originPoly(polyIndex = 0) {
         const R = window.R
-        const polygon = R[polyIndex]
-        const focalPoint = polygon.polyPoints[0]
-        // This is a non-vector translation to origin
-        polygon.polyPoints.map((point, idx) => {
-          polygon.polyPoints[idx] = point.map((v, i) => v - focalPoint[i])
-        })
-        // A vector translation to origin would be
-        // https://bit.ly/3DQbNbZ
-        R[polyIndex] = polygon
+        const selectedOriginPoint = 0
+        R[polyIndex] = moveFocalPointToOrigin(R[polyIndex], selectedOriginPoint)
         drawMulti('rotateContainer', R)
         window.R = R
       }
 
       function alignPoly(polyIndex = 0) {
         const R = window.R
-        let polygon = R[polyIndex]
-        let alignPoint = polygon.polyPoints[1]
-
-        const xang = Math.atan2(alignPoint[1], alignPoint[0])
-        polygon = rotate('z', polyIndex, xang)
-
-        alignPoint = polygon.polyPoints[1]
-        const zang = Math.atan2(alignPoint[2], alignPoint[0])
-        rotate('y', polyIndex, zang)
+        const selectedAlignPoint = 1
+        R[polyIndex] = rotateToAlign(R[polyIndex], selectedAlignPoint)
+        drawMulti('rotateContainer', R)
+        window.R = R
       }
 
-      function rotateToGoal() {
+      // Rotate a point on poly to goalPoly
+      function goalPoly(polyIndex, goalPolyIndex) {
         const R = window.R
-        const rotatePoint = R[0].polyPoints[2]
-        const goalRotatePoint = R[1].polyPoints[2]
-
-        const myang = Math.atan2(rotatePoint[2], rotatePoint[1])
-        const byang = Math.atan2(goalRotatePoint[2], goalRotatePoint[1])
-        const yang = byang - myang
-        rotate('x', 0, yang)
+        const selectedPoint = 2
+        R[polyIndex] = rotateToGoal(
+          R[polyIndex],
+          R[goalPolyIndex],
+          selectedPoint
+        )
+        drawMulti('rotateContainer', R)
+        window.R = R
       }
 
       function rotate(axis, polyIndex = 0, rads = 0.1) {
         const R = window.R
-        const polygon = R[polyIndex]
-        const theta = tf.scalar(rads)
-        const tc = theta.cos().arraySync()
-        const ts = theta.sin().arraySync()
-        // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
-        // https://robotics.stackexchange.com/questions/10702/rotation-matrix-sign-convention-confusion
-        let rotateMatrix // Not the normal right-hand rule version
-        if (axis === 'x') {
-          rotateMatrix = tf.tensor([
-            [1, 0, 0],
-            [0, tc, -ts],
-            [0, ts, tc],
-          ])
-        } else if (axis === 'y') {
-          rotateMatrix = tf.tensor([
-            [tc, 0, ts],
-            [0, 1, 0],
-            [-ts, 0, tc],
-          ])
-        } else if (axis === 'z') {
-          rotateMatrix = tf.tensor([
-            [tc, ts, 0],
-            [-ts, tc, 0],
-            [0, 0, 1],
-          ])
-        }
-
-        polygon.polyPoints.map((alignPoint, alignPointIndex) => {
-          const tensorAlign = tf.tensor(alignPoint).reshape([3, 1])
-          const newAlignPoint = tf.matMul(rotateMatrix, tensorAlign)
-          const movedPoint = newAlignPoint.arraySync()
-          polygon.polyPoints[alignPointIndex] = movedPoint
-        })
-
-        R[polyIndex] = polygon
+        let polygon = R[polyIndex]
+        // Rotate it
+        R[polyIndex] = matrixRotate(axis, polygon, rads)
         drawMulti('rotateContainer', R)
-
         window.R = R
         return polygon
       }
@@ -355,7 +316,6 @@
         }
 
         drawMulti('inputContainer', [inputPose], posePoints)
-
         drawMulti('goalContainer', [goalPose], posePoints)
 
         window.P = [inputPose, goalPose]
@@ -416,7 +376,7 @@
 
       document
         .getElementById('rotateToGoal')
-        .addEventListener('click', rotateToGoal)
+        .addEventListener('click', () => goalPoly(0, 1))
 
       document
         .getElementById('rotateX')

@@ -335,6 +335,7 @@
 
       function processPoses() {
         const P = window.P
+        let [inputPose, goalPose] = P
 
         const posePoints = {
           focalPoint: Number(document.getElementById('focalPoint').value),
@@ -342,7 +343,20 @@
           rotatePoint: Number(document.getElementById('rotatePoint').value),
         }
 
-        drawMulti('transformedContainer', P, posePoints)
+        // Step 1:  Origin Poses
+        const selectedOriginPoint = posePoints.focalPoint
+        inputPose = moveFocalPointToOrigin(inputPose, posePoints.focalPoint)
+        goalPose = moveFocalPointToOrigin(goalPose, posePoints.focalPoint)
+
+        // Step 2: Align poses along X axis
+        inputPose = rotateToAlign(inputPose, posePoints.alignPoint)
+        goalPose = rotateToAlign(goalPose, posePoints.alignPoint)
+
+        // Step 3: Rotate input to goal pose
+        inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
+
+        // Step 4: Display
+        drawMulti('transformedContainer', [inputPose, goalPose], posePoints)
       }
 
       // Make Buttons Work

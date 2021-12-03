@@ -354,7 +354,7 @@
         goalPose = rotateToAlign(goalPose, posePoints.alignPoint)
 
         // Step 3: Rotate input to goal pose
-        // inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
+        inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
 
         // Step 4: Display
         drawMulti('transformedContainer', [inputPose, goalPose], posePoints)

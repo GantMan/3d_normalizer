@@ -209,7 +209,7 @@ export function rotateToAlign(polygon, alignPointIndex) {
   const xang = Math.atan2(alignPoint[1], alignPoint[0])
   polygon = matrixRotate('z', polygon, xang)
   // Rotate Y to X axis
-  alignPoint = polygon.polyPoints[1]
+  alignPoint = polygon.polyPoints[alignPointIndex]
   const zang = Math.atan2(alignPoint[2], alignPoint[0])
   return matrixRotate('y', polygon, zang)
 }

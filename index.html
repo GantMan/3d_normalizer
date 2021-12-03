@@ -205,6 +205,7 @@
         moveFocalPointToOrigin,
         rotateToAlign,
         rotateToGoal,
+        nudge,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -300,13 +301,13 @@
         const inputPose = {
           metadata: [],
           sequences,
-          polyPoints: POSES.pose1,
+          polyPoints: nudge(POSES.pose1, 1, 1, 1),
         }
 
         const goalPose = {
           metadata: [],
           sequences,
-          polyPoints: POSES.pose2,
+          polyPoints: nudge(POSES.pose2, 1, 1, 1),
         }
 
         const posePoints = {
@@ -353,7 +354,7 @@
         goalPose = rotateToAlign(goalPose, posePoints.alignPoint)
 
         // Step 3: Rotate input to goal pose
-        inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
+        // inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
 
         // Step 4: Display
         drawMulti('transformedContainer', [inputPose, goalPose], posePoints)

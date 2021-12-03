@@ -223,3 +223,7 @@ export function rotateToGoal(polygon, goalPolygon, rotateIndex) {
   const yang = byang - myang
   return matrixRotate('x', polygon, yang)
 }
+
+export function nudge(poly, x, y, z) {
+  return poly.map((coords) => [coords[0] + x, coords[1] + y, coords[2] + z])
+}

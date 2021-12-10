@@ -1,4 +1,8 @@
-import { BLAZEPOSE_KEYPOINTS_BY_SIDE, ANCHOR_POINTS } from './constants.js'
+import {
+  BLAZEPOSE_KEYPOINTS_BY_SIDE,
+  ANCHOR_POINTS,
+  BLAZEPOSE_SECTIONS,
+} from './constants.js'
 
 // Stylizes points colors for multiple polies or poses
 export function selectColor(colorNum, totalPoints, colors, pose) {
@@ -13,6 +17,7 @@ export function selectColor(colorNum, totalPoints, colors, pose) {
   if (colorNum === pose.focalPoint) return '#ff0000'
   if (colorNum === pose.alignPoint) return '#C50EFD'
   if (colorNum === pose.rotatePoint) return '#0ECDFD'
+  if (pose.activePoints?.includes(colorNum)) return '#FFA500'
 
   // Color sides of pose
   const keypointInd = BLAZEPOSE_KEYPOINTS_BY_SIDE
@@ -244,4 +249,17 @@ export function averageDistance(poly1, poly2) {
       .map((d, i) => euclidianDistance(d, poly2[i]))
       .reduce((d1, d2) => d1 + d2, 0) / poly1.length
   )
+}
+
+export function getActiveSectionSet(idArray) {
+  const sections = idArray.map((curID) => {
+    const checkItem = document.getElementById(curID)
+    if (checkItem.checked) {
+      return BLAZEPOSE_SECTIONS[checkItem.value]
+    } else {
+      return
+    }
+  })
+
+  return [...new Set(sections.flat())]
 }

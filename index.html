@@ -192,6 +192,14 @@
     </div>
     <div class="stepControls">
       <button id="runProcess">Run Normalization Process</button>
+      <input type="checkbox" id="faceP" name="faceP" value="face" checked />
+      <label for="faceP">Face</label>
+      <input type="checkbox" id="armsP" name="armsP" value="arms" checked />
+      <label for="armsP">Arms</label>
+      <input type="checkbox" id="bodyP" name="bodyP" value="body" checked />
+      <label for="bodyP">Body</label>
+      <input type="checkbox" id="legsP" name="legsP" value="legs" checked />
+      <label for="legsP">Legs</label>
       <p class="distanceLabel">Before Distance:</p>
       <p class="distanceValue" id="beforeDistanceVal">N/A</p>
       <p class="distanceLabel">Transformed Distance:</p>
@@ -216,6 +224,7 @@
         rotateToGoal,
         nudge,
         averageDistance,
+        getActiveSectionSet,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -392,13 +401,50 @@
         // Step 3: Rotate input to goal pose
         inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
 
-        // Step 4: Display
-        drawMulti('transformedContainer', [inputPose, goalPose], posePoints)
+        // Step 4: Identify subsets
+        const activePoints = getActiveSectionSet([
+          'faceP',
+          'armsP',
+          'bodyP',
+          'legsP',
+        ])
+        const transformDisplay = {
+          ...posePoints,
+          activePoints,
+        }
+
+        // Step 5: Display
+        drawMulti(
+          'transformedContainer',
+          [inputPose, goalPose],
+          transformDisplay
+        )
         handleDistance(
           'transformDistanceVal',
           inputPose.polyPoints,
           goalPose.polyPoints
         )
+
+        // Step 6: Store
+        window.P2 = [inputPose, goalPose]
+      }
+
+      function recalcActivePoints() {
+        if (!window.P2) return
+
+        const posePoints = {
+          focalPoint: Number(document.getElementById('focalPoint').value),
+          alignPoint: Number(document.getElementById('alignPoint').value),
+          rotatePoint: Number(document.getElementById('rotatePoint').value),
+          activePoints: getActiveSectionSet([
+            'faceP',
+            'armsP',
+            'bodyP',
+            'legsP',
+          ]),
+        }
+
+        drawMulti('transformedContainer', window.P2, posePoints)
       }
 
       // Make Buttons Work
@@ -452,6 +498,22 @@
       document
         .getElementById('runProcess')
         .addEventListener('click', processPoses)
+
+      document
+        .getElementById('faceP')
+        .addEventListener('click', recalcActivePoints)
+
+      document
+        .getElementById('armsP')
+        .addEventListener('click', recalcActivePoints)
+
+      document
+        .getElementById('bodyP')
+        .addEventListener('click', recalcActivePoints)
+
+      document
+        .getElementById('legsP')
+        .addEventListener('click', recalcActivePoints)
     </script>
   </body>
 </html>

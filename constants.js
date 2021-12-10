@@ -4,7 +4,7 @@ export const ANCHOR_POINTS = [
   [0, 1, 0],
   [-1, 0, 0],
   [-1, -1, 0],
-];
+]
 
 export const BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS = [
   [0, 1],
@@ -43,13 +43,20 @@ export const BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS = [
   [28, 32],
   [29, 31],
   [30, 32],
-];
+]
+
+export const BLAZEPOSE_SECTIONS = {
+  face: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  arms: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+  body: [12, 11, 24, 23],
+  legs: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
+}
 
 export const BLAZEPOSE_KEYPOINTS_BY_SIDE = {
   left: [1, 2, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31],
   right: [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
   middle: [0],
-};
+}
 
 export const POSES = {
   pose1: [
@@ -157,4 +164,4 @@ export const POSES = {
     [-0.15971797704696655, -0.8614895343780518, -0.08044195175170898],
     [-0.01715691201388836, -0.8730591535568237, 0.20417053997516632],
   ],
-};
+}

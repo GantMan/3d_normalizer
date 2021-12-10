@@ -227,3 +227,21 @@ export function rotateToGoal(polygon, goalPolygon, rotateIndex) {
 export function nudge(poly, x, y, z) {
   return poly.map((coords) => [coords[0] + x, coords[1] + y, coords[2] + z])
 }
+
+// N-D point distance for two points
+function euclidianDistance(point1, point2) {
+  return Math.sqrt(
+    point1
+      .map((val, i) => val - point2[i])
+      .reduce((res, diff) => res + Math.pow(diff, 2), 0)
+  )
+}
+
+// Average distance between points in two polygons
+export function averageDistance(poly1, poly2) {
+  return (
+    poly1
+      .map((d, i) => euclidianDistance(d, poly2[i]))
+      .reduce((d1, d2) => d1 + d2, 0) / poly1.length
+  )
+}

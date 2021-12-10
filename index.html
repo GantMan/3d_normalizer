@@ -192,6 +192,10 @@
     </div>
     <div class="stepControls">
       <button id="runProcess">Run Normalization Process</button>
+      <p class="distanceLabel">Before Distance:</p>
+      <p class="distanceValue" id="beforeDistanceVal">N/A</p>
+      <p class="distanceLabel">Transformed Distance:</p>
+      <p class="distanceValue" id="transformDistanceVal">N/A</p>
     </div>
 
     <script type="module">
@@ -345,6 +349,11 @@
 
         drawMulti('inputContainer', [inputPose], posePoints)
         drawMulti('goalContainer', [goalPose], posePoints)
+        handleDistance(
+          'beforeDistanceVal',
+          inputPose.polyPoints,
+          goalPose.polyPoints
+        )
 
         window.P = [inputPose, goalPose]
       }
@@ -385,6 +394,11 @@
 
         // Step 4: Display
         drawMulti('transformedContainer', [inputPose, goalPose], posePoints)
+        handleDistance(
+          'transformDistanceVal',
+          inputPose.polyPoints,
+          goalPose.polyPoints
+        )
       }
 
       // Make Buttons Work

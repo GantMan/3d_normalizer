@@ -174,3 +174,18 @@ body {
   margin-top: -15px;
   padding-left: 60px;
 }
+
+.distanceLabel {
+  font-size: large;
+  font-weight: bold;
+  margin: 0 10px;
+  border-left: 1px solid black;
+  margin-left: 10px;
+  padding-left: 20px;
+}
+
+.distanceValue {
+  font-family: monospace;
+  font-size: large;
+  margin-right: 24px;
+}

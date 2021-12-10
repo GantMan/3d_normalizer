@@ -43,7 +43,12 @@
       <button id="rotateY">Rotate Y</button>
       <button id="rotateZ">Rotate Z</button>
       <button id="spinEm">Spin 3D</button>
+      <div class="distancer">
+        <p>Distance:</p>
+        <p id="distanceDisplay"></p>
+      </div>
     </div>
+
     <hr />
     <h2>Pose Application</h2>
     <div class="stepControls">
@@ -206,6 +211,7 @@
         rotateToAlign,
         rotateToGoal,
         nudge,
+        averageDistance,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -227,8 +233,19 @@
         const random = simpleTriangle([1, 1, 0.2])
         const triangle = simpleTriangle()
         drawMulti('rotateContainer', [random, triangle])
+        handleDistance(
+          'distanceDisplay',
+          random.polyPoints,
+          triangle.polyPoints
+        )
         // store R in global for debug accessibility
         window.R = [random, triangle]
+      }
+
+      function handleDistance(elementID, poly1, poly2) {
+        const distCalc = averageDistance(poly1, poly2)
+        document.getElementById(elementID).innerText =
+          Number(distCalc).toFixed(10)
       }
 
       function createR() {
@@ -236,6 +253,11 @@
         const triangle = create3DPolygon(3)
 
         drawMulti('rotateContainer', [random, triangle])
+        handleDistance(
+          'distanceDisplay',
+          random.polyPoints,
+          triangle.polyPoints
+        )
         // store R in global for debug accessibility
         window.R = [random, triangle]
       }
@@ -252,6 +274,7 @@
         rotate('x', 0, Math.random())
         rotate('y', 0, Math.random())
         rotate('z', 0, Math.random())
+        handleDistance('distanceDisplay', random.polyPoints, lock.polyPoints)
       }
 
       function originPoly(polyIndex = 0) {
@@ -259,6 +282,7 @@
         const selectedOriginPoint = 0
         R[polyIndex] = moveFocalPointToOrigin(R[polyIndex], selectedOriginPoint)
         drawMulti('rotateContainer', R)
+        handleDistance('distanceDisplay', R[0].polyPoints, R[1].polyPoints)
         window.R = R
       }
 
@@ -267,6 +291,7 @@
         const selectedAlignPoint = 1
         R[polyIndex] = rotateToAlign(R[polyIndex], selectedAlignPoint)
         drawMulti('rotateContainer', R)
+        handleDistance('distanceDisplay', R[0].polyPoints, R[1].polyPoints)
         window.R = R
       }
 
@@ -280,6 +305,7 @@
           selectedPoint
         )
         drawMulti('rotateContainer', R)
+        handleDistance('distanceDisplay', R[0].polyPoints, R[1].polyPoints)
         window.R = R
       }
 
@@ -289,6 +315,7 @@
         // Rotate it
         R[polyIndex] = matrixRotate(axis, polygon, rads)
         drawMulti('rotateContainer', R)
+        handleDistance('distanceDisplay', R[0].polyPoints, R[1].polyPoints)
         window.R = R
         return polygon
       }

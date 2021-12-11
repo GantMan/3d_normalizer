@@ -252,14 +252,25 @@ export function averageDistance(poly1, poly2) {
 }
 
 export function getActiveSectionSet(idArray) {
-  const sections = idArray.map((curID) => {
+  const sections = idArray.flatMap((curID) => {
     const checkItem = document.getElementById(curID)
     if (checkItem.checked) {
-      return BLAZEPOSE_SECTIONS[checkItem.value]
+      return [BLAZEPOSE_SECTIONS[checkItem.value]]
     } else {
-      return
+      return []
     }
   })
 
   return [...new Set(sections.flat())]
+}
+
+export function subPolies(poly1, poly2, activePoints) {
+  const subPoly1 = []
+  const subPoly2 = []
+  activePoints.forEach((activePoint) => {
+    subPoly1.push(poly1[activePoint])
+    subPoly2.push(poly2[activePoint])
+  })
+
+  return [subPoly1, subPoly2]
 }

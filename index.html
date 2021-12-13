@@ -51,6 +51,26 @@
 
     <hr />
     <h2>Pose Application</h2>
+    <div class="poseSelectors">
+      <select id="inputPose" name="inputPose">
+        <option value="pose1" selected>Pose 1 - Arms Up Straight Ahead</option>
+        <option value="pose2">Pose 2 - Arms Up Turned Left</option>
+        <option value="pose3">Pose 3 - Arms Up Turned Right</option>
+        <option value="pose4">Pose 4 - One Arm Up</option>
+        <option value="pose5">Pose 5 - Arms Up One Leg Up</option>
+        <option value="pose6">Pose 6 - Arms Down</option>
+        <option value="pose7">Pose 7 - Arms Up Straight Out</option>
+      </select>
+      <select id="goalPose" name="goalPose">
+        <option value="pose1">Pose 1 - Arms Up Straight Ahead</option>
+        <option value="pose2" selected>Pose 2 - Arms Up Turned Left</option>
+        <option value="pose3">Pose 3 - Arms Up Turned Right</option>
+        <option value="pose4">Pose 4 - One Arm Up</option>
+        <option value="pose5">Pose 5 - Arms Up One Leg Up</option>
+        <option value="pose6">Pose 6 - Arms Down</option>
+        <option value="pose7">Pose 7 - Arms Up Straight Out</option>
+      </select>
+    </div>
     <div class="stepControls">
       <div>
         <span id="poseText"
@@ -343,16 +363,19 @@
           indices: pair,
         }))
 
+        const chosenInput = document.getElementById('inputPose').value
+        const chosenGoal = document.getElementById('goalPose').value
+
         const inputPose = {
           metadata: [],
           sequences,
-          polyPoints: nudge(POSES.pose1, 1, 1, 1),
+          polyPoints: nudge(POSES[chosenInput], 1, 1, 1),
         }
 
         const goalPose = {
           metadata: [],
           sequences,
-          polyPoints: nudge(POSES.pose2, 1, 1, 1),
+          polyPoints: nudge(POSES[chosenGoal], 1, 1, 1),
         }
 
         const posePoints = {

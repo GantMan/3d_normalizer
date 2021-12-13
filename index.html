@@ -224,8 +224,13 @@
       <label for="legsP">Legs</label>
       <input type="checkbox" id="feetP" name="feetP" value="feet" checked />
       <label for="feetP">Feet</label>
+      <div class="sep"></div>
+      <input type="checkbox" id="flatten" name="flatten" value="1" />
+      <label for="flatten">Flatten Transforms</label>
+      <div class="sep"></div>
       <p class="distanceLabel">Before Distance:</p>
       <p class="distanceValue" id="beforeDistanceVal">N/A</p>
+      <div class="sep"></div>
       <p class="distanceLabel">Transformed Distance:</p>
       <p class="distanceValue" id="transformDistanceVal">N/A</p>
     </div>
@@ -250,6 +255,7 @@
         averageDistance,
         getActiveSectionSet,
         subPolies,
+        twoDims,
       } from './helpers.js'
 
       // OPTIMIZATION NOTE:  The following code is a demonstration, where all points are rotated through 3D space.
@@ -429,36 +435,13 @@
         // Step 3: Rotate input to goal pose
         inputPose = rotateToGoal(inputPose, goalPose, posePoints.rotatePoint)
 
-        // Step 4: Identify subsets
-        const activePoints = getActiveSectionSet([
-          'faceP',
-          'armsP',
-          'bodyP',
-          'legsP',
-          'handsP',
-          'feetP',
-        ])
-        const transformDisplay = {
-          ...posePoints,
-          activePoints,
-        }
-
-        // Step 5: Display
-        drawMulti(
-          'transformedContainer',
-          [inputPose, goalPose],
-          transformDisplay
-        )
-
-        const [poly1, poly2] = subPolies(
-          inputPose.polyPoints,
-          goalPose.polyPoints,
-          activePoints
-        )
-        handleDistance('transformDistanceVal', poly1, poly2)
-
-        // Step 6: Store
+        // Step 4: Store
         window.P2 = [inputPose, goalPose]
+        // store the 3D copy
+        window.P3D = window.P2
+
+        // Step 5: Calculate distances, subsets, and display
+        processTransformAlterations()
       }
 
       function recalcActivePoints() {
@@ -487,6 +470,33 @@
           activePoints
         )
         handleDistance('transformDistanceVal', poly1, poly2)
+      }
+
+      function processTransformAlterations() {
+        if (!window.P2) return // only available after processing normalizations
+
+        if (document.getElementById('flatten').checked) {
+          let [pose1, pose2] = window.P2
+
+          // flatten both poses
+          const flatPose1 = {
+            ...pose1,
+            polyPoints: twoDims(pose1.polyPoints),
+          }
+
+          const flatPose2 = {
+            ...pose2,
+            polyPoints: twoDims(pose2.polyPoints),
+          }
+          // store flattened poses
+          window.P2 = [flatPose1, flatPose2]
+        } else if (window.P3D) {
+          // restore from cache
+          window.P2 = window.P3D
+        }
+
+        // Recalculate distance & Draw
+        recalcActivePoints()
       }
 
       // Make Buttons Work
@@ -564,6 +574,10 @@
       document
         .getElementById('feetP')
         .addEventListener('click', recalcActivePoints)
+
+      document
+        .getElementById('flatten')
+        .addEventListener('change', processTransformAlterations)
     </script>
   </body>
 </html>

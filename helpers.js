@@ -233,6 +233,10 @@ export function nudge(poly, x, y, z) {
   return poly.map((coords) => [coords[0] + x, coords[1] + y, coords[2] + z])
 }
 
+export function twoDims(poly) {
+  return poly.map((coords) => [coords[0], coords[1], [0.000001]])
+}
+
 // N-D point distance for two points
 function euclidianDistance(point1, point2) {
   return Math.sqrt(
